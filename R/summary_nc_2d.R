@@ -43,8 +43,8 @@ mask_nc_2d <- function(data.in,write.out = F,output.files,shp.file,var.name,agg.
       which.area = which(shp.str[,which.att] %in% area.names)
       
       
-      data.shp = terra::mask(data,shp.vect[])
-      data.stat.ls[[s]] = terra::tapp(data.shp,
+      data.shp = terra::mask(data,shp.vect[which.area,])
+      data.stat = terra::tapp(data.shp,
                                 index =agg.time,
                                 fun = statistic)
       # test =zonal(data,shp.vect,mean,na.rm=T,as.raster =T)
@@ -56,14 +56,8 @@ mask_nc_2d <- function(data.in,write.out = F,output.files,shp.file,var.name,agg.
       
     }
     
-    data.mask = terra::clamp(data, lower = min.value, upper = max.value, values = F)
-    
-    if(binary){
-      data.mask = (data.mask*0)+1
-    }
-    
     if(write.out){
-      writeCDF(data.mask, output.files[i],varname = var.name,overwrite =T)
+      writeCDF(data.stat, output.files[i],varname = paste0(var.name,'_',statistic),overwrite =T)
     }else{
       out.ls[[i]] = data.mask
     }
