@@ -1,0 +1,76 @@
+#' Masks a 2D netCDF using a lower and upper value
+#'
+#' descriptions
+#'
+#' @data.in Either a character vector of full input file names for a list of spatRasters
+#' @output.files character vector of full output file names corresponding to each input file
+#' @shp.file  string. Shape file you wish to crop each input file to
+#' @var.name string. Variable name you wish to extract 
+#' @agg.time string. Whether to aggregate over. Passed to terra::tapp (e.g. "days", "months", or "years", etc.)
+#' @statistic string. Which statistic to calculate
+#' @area.names character vector. Names of shape file areas you want to summarise
+#' @write.out logical. If TRUE, will write a netCDF file with output.files. If FALSE will return a list of spatRasters
+#'
+#' @return netCDF file with same time dimensions as input file 
+#' 
+#' @export
+
+mask_nc_2d <- function(data.in,write.out = F,output.files,shp.file,var.name,agg.time,statistic){
+  
+  if(!is.na(shp.file)){
+    shp.vect = terra::vect(shp.file)
+  }
+  
+  out.ls = list()
+  for(i in 1:length(data.in)){
+    
+    if(is.character(data.in)){
+      
+      data = terra::rast(data.in[i])
+      
+    }else if(class(data.in[[i]])[1] == 'SpatRaster'){
+      
+      data = data.in[[i]]
+      
+    }else{
+      stop('data.in needs to be either file names or spatRasters')
+    } 
+    
+    if(!is.na(shp.file)){
+      
+      shp.str = as.data.frame(shp.vect)
+      which.att = which(apply(shp.str,2,function(x) all(area.names %in% x)))
+      which.area = which(shp.str[,which.att] %in% area.names)
+      
+      
+      data.shp = terra::mask(data,shp.vect[])
+      data.stat.ls[[s]] = terra::tapp(data.shp,
+                                index =agg.time,
+                                fun = statistic)
+      # test =zonal(data,shp.vect,mean,na.rm=T,as.raster =T)
+      # dim(test)  
+      # plot(data.stat)
+
+    }else{
+      
+      
+    }
+    
+    data.mask = terra::clamp(data, lower = min.value, upper = max.value, values = F)
+    
+    if(binary){
+      data.mask = (data.mask*0)+1
+    }
+    
+    if(write.out){
+      writeCDF(data.mask, output.files[i],varname = var.name,overwrite =T)
+    }else{
+      out.ls[[i]] = data.mask
+    }
+  }
+  
+  if(write.out ==F){
+    return(out.ls)  
+  }
+  
+}

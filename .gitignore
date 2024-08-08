@@ -7,3 +7,4 @@
 *.Rproj
 inst/doc
 docs
+test_data
