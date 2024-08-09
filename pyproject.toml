@@ -1,84 +1,24 @@
--backend
-[buildr package:
-requires = ["sm the build:
-build-backend = "setuptoolsr can happen
-dynamic = ['version'].cations/cREAD_EDAB_Utilities#s/single-sou1cindev1-pg/specificationsCommon Functions READ EDABpecifications/core-medistributing-packages-using.python.org/en/latest/specificats#ed to assist searching for the distribution in a
-e project, and a valid eLaura Gruenburgponding to tlaura.gruenburg@noaa.gov
-autains the project, and a valiLaura Gruenburgresponding tlaura.gruenburg@noaa.gov
-mainttegorizing it.
-#
-# For a list of valid classifiers, see https://pypi.org/classifiers/
-classifiers = [
-  # How mature is this project? Common values are
-  #   3 - Alpha
-  #   4 - Beta
-  #   5 - Production/#Stable
-  "Development Status :: 3 - #Alpha",
+[build system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
 
-  # Indicate who your project is intended for
-  "Intended Audience :: Dev#elopers",
-  "Topic :: Software Development :: Build Tools",
-
-  # Pick your license as you wish
-  "License :: OSI Approved :: MIT License",
-
-  # Specify the Python versions you support here. In particular, ensure
-  # that you indicate you support Python 3. Thes#e classifiers are *not*
-  # checked by #"pip install". See instead "requires-python"# key in this file.
-  "Programming Languag#e :: Python :: 3",
-  "Programming Language :#: Python :: 3.8",
-  "Programming Language #:: Python :: 3.9",
-  "Programming Language :#: Python :: 3.10",
-  "Programming Language :: Python :: 3.11",
-  "Programming Language :: Python :: 3.12",
-  "Programming Language :: Python :: 3 :: Only",
-]
-
-# This field lists other packages that your project depends on to run.
-# Any package you put here will be installed by pip when your project is
-# installed, so they must be valid existing projects.
-#
-# For an analysis of thi#s field vs pip's #requirements fi#les see:
-# https://packaging.python.org/discussions/install-requires-vs-requirements/
+[project]
+name = "testfunctionpy"
+version = "0.0.1dev1"
+description = "test function"
+readme = "README.md"
+authors = [{ name = "Laura Gruenburg" }]
 dependencies = [
-  "peppercorn"
+    "numpy"
+]
+classifiers = [
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
 ]
 
-# List additional groups of dependencies here (e.g. development
-# dependencies). Users will be able to install these using the "extras"
-# syntax, for example:
-#
-#   $ pip install sampleproject[dev]
-#
-# Optional dependencies the project provides. These are commonly 
-# referred to as "e#xtras". For a more extensive def#inition see:
-# https://p#ackaging.python.org/en/latest/specifications/dependency-specifiers/#extras
-[project.optional-dependencies]
-dev = ["check-manifest"]
-test = ["coverage"]
-
-# List URLs that are relevant to your project
-#
-# This field corresponds to the "Project-URL" and "Home-Page" metadata fields:
-# https://packaging.python.org/specifications/core-metadata/#project-url-multiple-use
-# https://packaging.python.org/specifications/core-metadata/#home-page-optional
-#
-# Examples listed include a pattern for specifying where the package tracks
-# issues, where the source is hosted, where to say thanks to the package
-# mhttps://github.com/NEFSC/READ_EDAB_Utilitiesprct/issues"
-"Funding" = "https://donate.pypi.org"
-"Say Thanks!" = "http://saythanks.io/to/example"
-"Source" = "https://github.com/pypa/sample#project/"
-
-# The# following would provide a command line executable called `sample`
-# which executes the function `main` from this package when invoked.
-[project.scripts]
-sample = "sample:main"
-
-
-# This is configuration specific to the `setuptools` build backend.
-# If you are using a different bu#ild backend, you will need to change this.
 [tool.setuptools]
-# If there are data files included in your packages that need to be
-# installed, specify them here.
-package-data = {"sample" = ["*.dat"]}
+packages.find.where = ["."]
+packages.find.include = ["testfunctionpy*"]
