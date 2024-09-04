@@ -1,24 +1,30 @@
-#' Masks a 2D netCDF using a lower and upper value
+#' Provides a gridded climatology based on a reference dates
 #'
 #' descriptions
 #'
 #' @data.in Either a character vector of full input file names for a list of spatRasters
+#' @climatology Either an input file name or spatRaster for the reference climatology. should be on same resolution as data.in
 #' @output.files character vector of full output file names corresponding to each input file
 #' @shp.file  string. Shape file you wish to crop each input file to
 #' @var.name string. Variable name you wish to extract 
-#' @agg.time string. Whether to aggregate over. Passed to terra::tapp (e.g. "days", "months", or "years", etc.)
-#' @statistic string. Which statistic to calculate
 #' @area.names character vector. Names of shape file areas you want to summarise
 #' @write.out logical. If TRUE, will write a netCDF file with output.files. If FALSE will return a list of spatRasters
 #'
 #' @return netCDF file with same time dimensions as input file 
 #' 
 #' @export
+#' 
 
-mask_nc_2d <- function(data.in,write.out = F,output.files,shp.file,var.name,agg.time,statistic){
+make_2d_anomaly_gridded = function(data.in,climatology,output.files,shp.file,var.name,area.names = NA,write.out =F){
+  
   
   if(!is.na(shp.file)){
     shp.vect = terra::vect(shp.file)
+  }
+  
+  if(is.character(climatology)){
+    
+    climatology = terra::rast(climatology)
   }
   
   out.ls = list()
@@ -36,6 +42,13 @@ mask_nc_2d <- function(data.in,write.out = F,output.files,shp.file,var.name,agg.
       stop('data.in needs to be either file names or spatRasters')
     } 
     
+    if(!(all(res(data) == res(climatology)) & all(ext(data) == ext(climatology)))){
+      
+      data = crop(mask(data,climatology),climatology)
+      data = resample(data,climatology)
+      
+    }
+    
     if(!is.na(shp.file)){
       
       shp.str = as.data.frame(shp.vect)
@@ -43,23 +56,17 @@ mask_nc_2d <- function(data.in,write.out = F,output.files,shp.file,var.name,agg.
       which.area = which(shp.str[,which.att] %in% area.names)
       
       
-      data.shp = terra::mask(data,shp.vect[which.area,])
-      data.stat = terra::tapp(data.shp,
-                                index =agg.time,
-                                fun = statistic)
-      # test =zonal(data,shp.vect,mean,na.rm=T,as.raster =T)
-      # dim(test)  
-      # plot(data.stat)
-
-    }else{
-      
+      data = terra::mask(data,shp.vect[which.area,])
+      climatology = terra::mask(climatology,shp.vect[which.area,])
       
     }
     
+    data.anom = data - climatology
+    
     if(write.out){
-      writeCDF(data.stat, output.files[i],varname = paste0(var.name,'_',statistic),overwrite =T)
+      writeCDF(data.anom, output.files[i],varname = paste0(var.name,'_',statistic),overwrite =T)
     }else{
-      out.ls[[i]] = data.mask
+      out.ls[[i]] = data.anom
     }
   }
   
