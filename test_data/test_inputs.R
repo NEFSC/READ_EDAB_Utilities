@@ -95,8 +95,20 @@ anom.test =make_2d_anomaly_gridded(data.in = data.in,
                                    write.out =F)
 plot(anom.test[[1]])
 
+source(here::here('R','make_2d_climatology_ts.R'))
+clim.ts =make_2d_climatology_ts(data.in = test.ts,
+                            write.out = F,
+                            start.time = start.time,
+                            stop.time = stop.time,
+                            statistic = statistic)
+
 source(here::here('R','make_2d_anomaly_ts.R'))
 anom.ts.test = make_2d_anomaly_ts(data.in = test.ts,
-                   climatology = test.ts[[1]],
+                   climatology = clim.ts,
                    output.files,
                    write.out = F)
+anom.ts.df = bind_rows(anom.ts.test)%>%
+  filter(!is.na(anom.value))
+ggplot(anom.ts.df,aes(x = time, y = anom.value))+
+  geom_line()+
+  facet_wrap(area~ls.id)

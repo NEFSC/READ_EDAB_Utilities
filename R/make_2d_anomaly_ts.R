@@ -40,7 +40,7 @@ make_2d_anomaly_ts  = function(data.in,climatology,output.files,write.out = F){
     if(write.out){
       saveRDS(data.comb, output.files[i])
     }else{
-      out.ls[[i]] = data.stat.df
+      out.ls[[i]] = data.comb
     }
     
   }
