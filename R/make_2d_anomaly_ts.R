@@ -13,7 +13,7 @@
 
 make_2d_anomaly_ts  = function(data.in,climatology,output.files,write.out = F){
 
-  climatology =rename(climatology,ref.value = 'value')
+  climatology =dplyr::rename(climatology,ref.value = 'value')
   
   out.ls = list()
   for(i in 1:length(data.in)){
@@ -33,7 +33,7 @@ make_2d_anomaly_ts  = function(data.in,climatology,output.files,write.out = F){
     #aggregate spatially if necessary
     
     data.comb =data %>%
-      dplyr::left_join(climatology)%>%
+      dplyr::left_join(climatology,)%>%
       dplyr::mutate(anom.value = value - ref.value)
     
     

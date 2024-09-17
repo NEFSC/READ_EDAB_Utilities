@@ -42,10 +42,10 @@ make_2d_anomaly_gridded = function(data.in,climatology,output.files,shp.file,var
       stop('data.in needs to be either file names or spatRasters')
     } 
     
-    if(!(all(res(data) == res(climatology)) & all(ext(data) == ext(climatology)))){
+    if(!(all(terra::res(data) == terra::res(climatology)) & all(terra::ext(data) == terra::ext(climatology)))){
       
-      data = crop(mask(data,climatology),climatology)
-      data = resample(data,climatology)
+      data = terra::crop(terra::mask(data,climatology),climatology)
+      data = terra::resample(data,climatology)
       
     }
     

@@ -1,21 +1,21 @@
 library(dplyr)
 library(ggplot2)
 library(terra)
-data.in = c(here::here('test_data','GLORYS_daily_BottomSalinity_2019.nc'),
-                here::here('test_data','GLORYS_daily_BottomSalinity_2020.nc'))
-output.files = c(here::here('test_data','GLORYS_daily_BottomSalinity_EPU_mask_2019.nc'),
-                here::here('test_data','GLORYS_daily_BottomSalinity_EPU_mask_2020.nc'))
-shp.file = here::here('test_data','EPU_NOESTUARIES.shp')
+data.in = c(here::here('data','GLORYS_daily_BottomSalinity_2019.nc'),
+                here::here('data','GLORYS_daily_BottomSalinity_2020.nc'))
+output.files = c(here::here('data','GLORYS_daily_BottomSalinity_EPU_mask_2019.nc'),
+                here::here('data','GLORYS_daily_BottomSalinity_EPU_mask_2020.nc'))
+shp.file = here::here('data','EPU_NOESTUARIES.shp')
 source(here::here('R','crop_nc_2d.R'))
 source(here::here('R','mask_nc_2d.R'))
 var.name = 'BottomS'      
 
 data.in = crop_nc_2d(
-  input.files = c(here::here('test_data','GLORYS_daily_BottomSalinity_2019.nc'),
-                  here::here('test_data','GLORYS_daily_BottomSalinity_2020.nc')),
-  output.files = c(here::here('test_data','GLORYS_daily_BottomSalinity_EPU_2019.nc'),
-                   here::here('test_data','GLORYS_daily_BottomSalinity_EPU_2020.nc')),
-  shp.file = here::here('test_data','EPU_NOESTUARIES.shp'),
+  input.files = c(here::here('data','GLORYS_daily_BottomSalinity_2019.nc'),
+                  here::here('data','GLORYS_daily_BottomSalinity_2020.nc')),
+  output.files = c(here::here('data','GLORYS_daily_BottomSalinity_EPU_2019.nc'),
+                   here::here('data','GLORYS_daily_BottomSalinity_EPU_2020.nc')),
+  shp.file = here::here('data','EPU_NOESTUARIES.shp'),
   var.name = 'BottomS',
   write.out = F
 
@@ -25,7 +25,9 @@ data.in = crop_nc_2d(
 min.value = 30
 max.value = 50
 
-
+ref.value = 33
+type = 'above'
+statistic = 'nd'
 
 data.mask = mask_nc_2d(
   data.in = data.in,
@@ -53,8 +55,8 @@ climatology = grid.test[[1]]
 plot(grid.test[[1]])  
 plot(grid.test[[2]])  
   
-source(here::here('R','summary_2d_ts_nc.R'))
-test.ts = summary_2d_ts_nc(data.in = data.in,
+source(here::here('R','make_2d_summary_ts.R'))
+test.ts = make_2d_summary_ts(data.in = data.in,
                            shp.file = shp.file,
                            var.name = var.name,
                            agg.time =agg.time,

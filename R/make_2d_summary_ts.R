@@ -16,7 +16,7 @@
 #' @export
 #' 
 
-summary_2d_ts_nc = function(data.in,output.files,shp.file,area.names,var.name,agg.time,statistic,write.out = F){
+make_2d_summary_ts = function(data.in,output.files,shp.file,area.names,var.name,agg.time,statistic,write.out = F){
   
   if(!is.na(shp.file)){
     shp.vect = terra::vect(shp.file)

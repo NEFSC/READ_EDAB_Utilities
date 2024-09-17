@@ -63,7 +63,7 @@ make_2d_climatology_gridded <- function(data.in,write.out = F,output.files,shp.f
   }
   
   data.stack = terra::sds(data.time.agg.ls)
-  data.clim =app(data.stack,statistic)
+  data.clim =terra::app(data.stack,statistic)
   
   if(write.out){
     writeCDF(data.clim, output.files[i],varname = paste0(var.name,'_',statistic),overwrite =T)

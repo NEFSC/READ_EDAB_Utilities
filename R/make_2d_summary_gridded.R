@@ -15,7 +15,7 @@
 #' 
 #' @export
 
-summary_2d_gridded_nc <- function(data.in,write.out = F,output.files,shp.file,var.name,agg.time,statistic,area.names){
+make_2d_summary_gridded <- function(data.in,write.out = F,output.files,shp.file,var.name,agg.time,statistic,area.names){
   
   if(!is.na(shp.file)){
     shp.vect = terra::vect(shp.file)
@@ -44,7 +44,7 @@ summary_2d_gridded_nc <- function(data.in,write.out = F,output.files,shp.file,va
       
       
       data.shp = terra::mask(data,shp.vect[which.area,])
-      data.stat = terra::app(data.shp,
+      data.stat = terra::tapp(data.shp,
                                 index =agg.time,
                                 fun = statistic)
     }else{
