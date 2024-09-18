@@ -2,11 +2,11 @@
 #'
 #' descriptions
 #'
-#' @data.in a dataframe or list of RDS files containing dataframes 
-#' @climatology a dataframe with the same time dimensions and area.names as data.in to act as a climatological reference
-#' @output.files character vector of full output file names corresponding to each input file
-#' @write.out logical. If TRUE, will write a netCDF file with output.files. If FALSE will return a list of spatRasters
-#' @return a dataframe output variable summarized by timestep for each area.names
+#' @param data.in a dataframe or list of RDS files containing dataframes 
+#' @param climatology a dataframe with the same time dimensions and area.names as data.in to act as a climatological reference
+#' @param output.files character vector of full output file names corresponding to each input file
+#' @param write.out logical. If TRUE, will write a netCDF file with output.files. If FALSE will return a list of spatRasters
+#' @param return a dataframe output variable summarized by timestep for each area.names
 #' 
 #' @export
 #' 

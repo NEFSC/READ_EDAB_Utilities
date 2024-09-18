@@ -13,6 +13,19 @@ make_2d_climatology_ts(
   statistic
 )
 }
+\arguments{
+\item{data.in}{Either a character vector of full input file names (RDS) for a list of data.frames}
+
+\item{write.out}{logical. If TRUE, will write a netCDF file with output.files. If FALSE will return a list of spatRasters}
+
+\item{start.time}{character. Either a date, year, julian day, or month corresponding to agg.time}
+
+\item{stop.time}{character. Either a date, year, julian day, or month corresponding to agg.time}
+
+\item{statistic}{character. The statistic over which to calculate climatology from}
+
+\item{output.file}{character. Full file name to write  output}
+}
 \value{
 netCDF file with same time dimensions as input file
 }

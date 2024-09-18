@@ -2,12 +2,12 @@
 #'
 #' descriptions
 #'
-#' @data.in Either a character vector of full input file names (RDS) for a list of data.frames
-#' @output.file character. Full file name to write  output
-#' @start.time character. Either a date, year, julian day, or month corresponding to agg.time
-#' @stop.time  character. Either a date, year, julian day, or month corresponding to agg.time
-#' @statistic character. The statistic over which to calculate climatology from
-#' @write.out logical. If TRUE, will write a netCDF file with output.files. If FALSE will return a list of spatRasters
+#' @param data.in Either a character vector of full input file names (RDS) for a list of data.frames
+#' @param output.file character. Full file name to write  output
+#' @param start.time character. Either a date, year, julian day, or month corresponding to agg.time
+#' @param stop.time  character. Either a date, year, julian day, or month corresponding to agg.time
+#' @param statistic character. The statistic over which to calculate climatology from
+#' @param write.out logical. If TRUE, will write a netCDF file with output.files. If FALSE will return a list of spatRasters
 #'
 #' @return netCDF file with same time dimensions as input file 
 #' 

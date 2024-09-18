@@ -2,14 +2,14 @@
 #'
 #' descriptions
 #'
-#' @data.in Either a character vector of full input file names for a list of spatrasters
-#' @output.files character vector of full output file names corresponding to each input file
-#' @shp.file  string. Shape file you wish to crop each input file to
-#' @var.name string. Variable name you wish to extract 
-#' @statistic string. Which statistic to calculate ('dd' for degree days, 'nd' for number of days)
-#' @ref.value numeric. reference point value for threshold
-#' @type string. How to use reference point ('above', 'below', or 'raw')
-#' @write.out logical. If TRUE, will write a netCDF file with output.files. If FALSE will return a list of spatRasters
+#' @param data.in Either a character vector of full input file names for a list of spatrasters
+#' @param output.files character vector of full output file names corresponding to each input file
+#' @param shp.file  string. Shape file you wish to crop each input file to
+#' @param var.name string. Variable name you wish to extract 
+#' @param statistic string. Which statistic to calculate ('dd' for degree days, 'nd' for number of days)
+#' @param ref.value numeric. reference point value for threshold
+#' @param type string. How to use reference point ('above', 'below', or 'raw')
+#' @param write.out logical. If TRUE, will write a netCDF file with output.files. If FALSE will return a list of spatRasters
 #'
 #' @return a dataframe output variable summarized by timestep for each area.names
 #' 

@@ -15,6 +15,23 @@ mask_nc_2d(
   binary = F
 )
 }
+\arguments{
+\item{data.in}{Either a character vector of full input file names for a list of spatRasters}
+
+\item{write.out}{logical. If TRUE, will write a netCDF file with output.files. If FALSE will return a list of spatRasters}
+
+\item{output.files}{character vector of full output file names corresponding to each input file}
+
+\item{shp.file}{string. Shape file you wish to crop each input file to}
+
+\item{var.name}{string. Variable name you wish to extract}
+
+\item{min.value}{numeric. Minimum value of var.name}
+
+\item{max.value}{numeric. maximum value of var.name}
+
+\item{binary}{logical. Whether mask should be binary (0 for outside range, 1 for inside range) or the original values}
+}
 \value{
 netCDF file with same time dimensions as input file
 }

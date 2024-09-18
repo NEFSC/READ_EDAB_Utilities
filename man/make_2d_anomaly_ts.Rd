@@ -6,8 +6,16 @@
 \usage{
 make_2d_anomaly_ts(data.in, climatology, output.files, write.out = F)
 }
-\value{
-a dataframe output variable summarized by timestep for each area.names
+\arguments{
+\item{data.in}{a dataframe or list of RDS files containing dataframes}
+
+\item{climatology}{a dataframe with the same time dimensions and area.names as data.in to act as a climatological reference}
+
+\item{output.files}{character vector of full output file names corresponding to each input file}
+
+\item{write.out}{logical. If TRUE, will write a netCDF file with output.files. If FALSE will return a list of spatRasters}
+
+\item{return}{a dataframe output variable summarized by timestep for each area.names}
 }
 \description{
 descriptions

@@ -16,6 +16,23 @@ make_2d_deg_day_ts(
   write.out = F
 )
 }
+\arguments{
+\item{data.in}{Either a character vector of full input file names for a list of spatrasters}
+
+\item{output.files}{character vector of full output file names corresponding to each input file}
+
+\item{shp.file}{string. Shape file you wish to crop each input file to}
+
+\item{var.name}{string. Variable name you wish to extract}
+
+\item{statistic}{string. Which statistic to calculate ('dd' for degree days, 'nd' for number of days)}
+
+\item{ref.value}{numeric. reference point value for threshold}
+
+\item{type}{string. How to use reference point ('above', 'below', or 'raw')}
+
+\item{write.out}{logical. If TRUE, will write a netCDF file with output.files. If FALSE will return a list of spatRasters}
+}
 \value{
 a dataframe output variable summarized by timestep for each area.names
 }

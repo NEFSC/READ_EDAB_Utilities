@@ -2,13 +2,13 @@
 #'
 #' descriptions
 #'
-#' @data.in Either a character vector of full input file names for a list of spatRasters
-#' @climatology Either an input file name or spatRaster for the reference climatology. should be on same resolution as data.in
-#' @output.files character vector of full output file names corresponding to each input file
-#' @shp.file  string. Shape file you wish to crop each input file to
-#' @var.name string. Variable name you wish to extract 
-#' @area.names character vector. Names of shape file areas you want to summarise
-#' @write.out logical. If TRUE, will write a netCDF file with output.files. If FALSE will return a list of spatRasters
+#' @param data.in Either a character vector of full input file names for a list of spatRasters
+#' @param climatology Either an input file name or spatRaster for the reference climatology. should be on same resolution as data.in
+#' @param output.files character vector of full output file names corresponding to each input file
+#' @param shp.file  string. Shape file you wish to crop each input file to
+#' @param var.name string. Variable name you wish to extract 
+#' @param area.names character vector. Names of shape file areas you want to summarise
+#' @param write.out logical. If TRUE, will write a netCDF file with output.files. If FALSE will return a list of spatRasters
 #'
 #' @return netCDF file with same time dimensions as input file 
 #' 

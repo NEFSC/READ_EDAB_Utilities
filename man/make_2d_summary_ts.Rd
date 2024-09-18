@@ -15,6 +15,21 @@ make_2d_summary_ts(
   write.out = F
 )
 }
+\arguments{
+\item{data.in}{Either a character vector of full input file names for a list of spatRasters}
+
+\item{output.files}{character vector of full output file names corresponding to each input file}
+
+\item{shp.file}{string. Shape file you wish to crop each input file to}
+
+\item{var.name}{string. Variable name you wish to extract}
+
+\item{agg.time}{character. Time scale to calculate climatology over (days,doy, months,season, or  years)}
+
+\item{statistic}{string. Which statistic to calculate}
+
+\item{write.out}{logical. If TRUE, will write a netCDF file with output.files. If FALSE will return a list of spatRasters}
+}
 \value{
 a dataframe output variable summarized by timestep for each area.names
 }

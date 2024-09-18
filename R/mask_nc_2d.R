@@ -2,14 +2,14 @@
 #'
 #' descriptions
 #'
-#' @data.in Either a character vector of full input file names for a list of spatRasters
-#' @output.files character vector of full output file names corresponding to each input file
-#' @shp.file  string. Shape file you wish to crop each input file to
-#' @var.name string. Variable name you wish to extract 
-#' @write.out logical. If TRUE, will write a netCDF file with output.files. If FALSE will return a list of spatRasters
-#' @min.value numeric. Minimum value of var.name 
-#' @max.value numeric. maximum value of var.name
-#' @binary logical. Whether mask should be binary (0 for outside range, 1 for inside range) or the original values
+#' @param data.in Either a character vector of full input file names for a list of spatRasters
+#' @param output.files character vector of full output file names corresponding to each input file
+#' @param shp.file  string. Shape file you wish to crop each input file to
+#' @param var.name string. Variable name you wish to extract 
+#' @param write.out logical. If TRUE, will write a netCDF file with output.files. If FALSE will return a list of spatRasters
+#' @param min.value numeric. Minimum value of var.name 
+#' @param max.value numeric. maximum value of var.name
+#' @param binary logical. Whether mask should be binary (0 for outside range, 1 for inside range) or the original values
 #'
 #' @return netCDF file with same time dimensions as input file 
 #' 

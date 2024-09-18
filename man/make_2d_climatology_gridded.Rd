@@ -17,6 +17,27 @@ make_2d_climatology_gridded(
   statistic
 )
 }
+\arguments{
+\item{data.in}{Either a character vector of full input file names for a list of spatRasters}
+
+\item{write.out}{logical. If TRUE, will write a netCDF file with output.files. If FALSE will return a list of spatRasters}
+
+\item{output.files}{character vector of full output file name}
+
+\item{shp.file}{string. Shape file you wish to crop each input file to}
+
+\item{var.name}{string. Variable name you wish to extract}
+
+\item{area.names}{character vector. Names of shape file areas you want to summarise}
+
+\item{start.time}{character. Either a date, year, julian day, or month corresponding to agg.time}
+
+\item{stop.time}{character. Either a date, year, julian day, or month corresponding to agg.time}
+
+\item{agg.time}{character. Time scale to calculate climatology over (days,doy, months, or years)}
+
+\item{statistic}{character. The statistic over which to calculate climatology from}
+}
 \value{
 netCDF file with same time dimensions as input file
 }

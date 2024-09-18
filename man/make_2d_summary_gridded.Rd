@@ -15,6 +15,23 @@ make_2d_summary_gridded(
   area.names
 )
 }
+\arguments{
+\item{data.in}{Either a character vector of full input file names for a list of spatRasters}
+
+\item{write.out}{logical. If TRUE, will write a netCDF file with output.files. If FALSE will return a list of spatRasters}
+
+\item{output.files}{character vector of full output file names corresponding to each input file}
+
+\item{shp.file}{string. Shape file you wish to crop each input file to}
+
+\item{var.name}{string. Variable name you wish to extract}
+
+\item{agg.time}{string. Whether to aggregate over. Passed to terra::tapp (e.g. "days", "months", or "years", "season", etc.)}
+
+\item{statistic}{string. Which statistic to calculate}
+
+\item{area.names}{character vector. Names of shape file areas you want to summarise}
+}
 \value{
 netCDF file with same time dimensions as input file
 }
