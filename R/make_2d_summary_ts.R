@@ -8,7 +8,7 @@
 #' @var.name string. Variable name you wish to extract 
 #' @var.name string. Variable name you wish to extract 
 #' @statistic string. Which statistic to calculate
-#' @agg.time character. Time scale to calculate climatology over (days,doy, months, or years)
+#' @agg.time character. Time scale to calculate climatology over (days,doy, months,season, or  years)
 #' @write.out logical. If TRUE, will write a netCDF file with output.files. If FALSE will return a list of spatRasters
 #'
 #' @return a dataframe output variable summarized by timestep for each area.names
@@ -37,7 +37,15 @@ make_2d_summary_ts = function(data.in,output.files,shp.file,area.names,var.name,
       stop('data.in needs to be either file names or spatRasters')
     } 
     
-    data.time = terra::time(data)
+    
+    data.time = as.Date(terra::time(data))
+    if(agg.time == 'season'){
+      month.season = data.frame(month=1:12,season =rep(1:4,each =3))
+      data.month = as.numeric(format(data.time,format = "%m"))
+      data.season = month.season$season[data.month]
+      season.names = 1:4
+    }
+    
     
     if(!is.na(shp.file)){
       
@@ -50,10 +58,23 @@ make_2d_summary_ts = function(data.in,output.files,shp.file,area.names,var.name,
         
         area.data = terra::mask(data,shp.vect[which.area[j],])
         
-        area.agg = terra::tapp(area.data,fun = statistic,index =agg.time)
+        if(agg.time == 'season'){
+          
+
+          area.agg = terra::tapp(area.data,
+                                 fun = statistic,
+                                 index =data.season)
+          time.out = season.names
+        }else{
+          area.agg = terra::tapp(area.data,
+                                 fun = statistic,
+                                 index =agg.time)  
+          time.out = terra::time(data.agg)
+        }
+        
         area.stat = terra::global(area.agg,statistic,na.rm=T)
         
-        data.stat.area.ls[[j]] = data.frame(time = terra::time(area.agg),
+        data.stat.area.ls[[j]] = data.frame(time = time.out,
                                             agg.time = agg.time,
                                             ls.id = ifelse(is.character(data.in),data.in[i],i),
                                             var.name = var.name,
@@ -64,10 +85,20 @@ make_2d_summary_ts = function(data.in,output.files,shp.file,area.names,var.name,
       data.stat.df = dplyr::bind_rows(data.stat.area.ls)
       
     }else{
-      data.agg = terra::tapp(data,fun =statistic,index = agg.time)
+      
+      if(agg.time == 'season'){
+
+        data.agg = terra::tapp(data,fun =statistic,index = data.season)
+        time.out = season.names
+
+      }else{
+        data.agg = terra::tapp(data,fun =statistic,index = agg.time)
+        time.out = terra::time(data.agg)
+      }
+      
       data.stat = terra::global(data.agg,statistic,na.rm=T)
       
-      data.stat.df = data.frame(time = terra::time(data.agg),
+      data.stat.df = data.frame(time = time.out,
                                 agg.time =agg.time,
                                 ls.id = ifelse(is.character(data.in),data.in[i],i),
                                 var.name = var.name,

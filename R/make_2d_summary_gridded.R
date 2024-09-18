@@ -6,7 +6,7 @@
 #' @output.files character vector of full output file names corresponding to each input file
 #' @shp.file  string. Shape file you wish to crop each input file to
 #' @var.name string. Variable name you wish to extract 
-#' @agg.time string. Whether to aggregate over. Passed to terra::tapp (e.g. "days", "months", or "years", etc.)
+#' @agg.time string. Whether to aggregate over. Passed to terra::tapp (e.g. "days", "months", or "years", "season", etc.)
 #' @statistic string. Which statistic to calculate
 #' @area.names character vector. Names of shape file areas you want to summarise
 #' @write.out logical. If TRUE, will write a netCDF file with output.files. If FALSE will return a list of spatRasters
@@ -36,6 +36,8 @@ make_2d_summary_gridded <- function(data.in,write.out = F,output.files,shp.file,
       stop('data.in needs to be either file names or spatRasters')
     } 
     
+    month.season = data.frame(month=1:12,season =rep(1:4,each =3))
+    
     if(!is.na(shp.file)){
       
       shp.str = as.data.frame(shp.vect)
@@ -44,15 +46,37 @@ make_2d_summary_gridded <- function(data.in,write.out = F,output.files,shp.file,
       
       
       data.shp = terra::mask(data,shp.vect[which.area,])
-      data.stat = terra::tapp(data.shp,
+      
+      if(agg.time == 'season'){
+        
+        data.time = as.Date(terra::time(data.shp))
+        data.month = as.numeric(format(data.time,format = '%m'))
+        data.season = month.season$season[data.month]
+        data.stat = terra::tapp(data.shp,
+                                index =data.season,
+                                fun = statistic)
+      }else{
+        data.stat = terra::tapp(data.shp,
                                 index =agg.time,
                                 fun = statistic)
+      }
+
     }else{
       
-      
-      data.stat = terra::tapp(data,
-                             index =agg.time,
-                             fun = statistic)
+      if(agg.time == 'season'){
+        data.time = as.Date(terra::time(data))
+        data.month = as.numeric(format(data.time,format = '%m'))
+        data.season = month.season$season[data.month]
+        data.stat = terra::tapp(data,
+                                index =data.season,
+                                fun = statistic)
+
+      }else{
+        data.stat = terra::tapp(data,
+                                index =agg.time,
+                                fun = statistic)
+      }
+
       
     }
     
