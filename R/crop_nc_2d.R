@@ -28,7 +28,7 @@ crop_nc_2d <- function(input.files,write.out = F,output.files,shp.file,var.name)
     data.crop= terra::crop(data.in,shp.vect)
     
     if(write.out){
-      writeCDF(data.crop,output.files[i],varname = var.name,overwrite =T)  
+      terra::writeCDF(data.crop,output.files[i],varname = var.name,overwrite =T)  
     }else{
       data.out.ls[[i]] = data.crop
     }

@@ -66,7 +66,7 @@ make_2d_climatology_gridded <- function(data.in,write.out = F,output.files,shp.f
   data.clim =terra::app(data.stack,statistic)
   
   if(write.out){
-    writeCDF(data.clim, output.files[i],varname = paste0(var.name,'_',statistic),overwrite =T)
+    terra::writeCDF(data.clim, output.files[i],varname = paste0(var.name,'_',statistic),overwrite =T)
   }else{
     return(data.clim)  
   }

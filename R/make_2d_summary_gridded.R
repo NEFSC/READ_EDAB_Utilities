@@ -81,7 +81,7 @@ make_2d_summary_gridded <- function(data.in,write.out = F,output.files,shp.file,
     }
     
     if(write.out){
-      writeCDF(data.stat, output.files[i],varname = paste0(var.name,'_',statistic),overwrite =T)
+      terra::writeCDF(data.stat, output.files[i],varname = paste0(var.name,'_',statistic),overwrite =T)
     }else{
       out.ls[[i]] = data.stat
     }
