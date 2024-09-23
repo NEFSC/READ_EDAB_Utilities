@@ -69,7 +69,7 @@ make_2d_summary_ts = function(data.in,output.files,shp.file,area.names,var.name,
           area.agg = terra::tapp(area.data,
                                  fun = statistic,
                                  index =agg.time)  
-          time.out = terra::time(data.agg)
+          time.out = terra::time(area.agg)
         }
         
         area.stat = terra::global(area.agg,statistic,na.rm=T)
