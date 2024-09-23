@@ -47,7 +47,7 @@ mask_nc_2d <- function(data.in,write.out = F,output.files,shp.file,var.name,min.
     }
     
     if(write.out){
-      writeCDF(data.mask, output.files[i],varname = var.name,overwrite =T)
+      terra::writeCDF(data.mask, output.files[i],varname = var.name,overwrite =T)
     }else{
       out.ls[[i]] = data.mask
     }
