@@ -6,9 +6,10 @@
 #' @param output.files character vector of full output file names corresponding to each input file
 #' @param shp.file  string. Shape file you wish to crop each input file to
 #' @param var.name string. Variable name you wish to extract 
-#' @param var.name string. Variable name you wish to extract 
 #' @param statistic string. Which statistic to calculate
 #' @param agg.time character. Time scale to calculate climatology over (days,doy, months,season, or  years)
+#' @param tz string. Time zone to convert. No correction if NA
+#' @param touches logical. If TRUE, all cells touched by lines or polygons will be masked, not just those on the line render path, or whose center point is within the polygon
 #' @param write.out logical. If TRUE, will write a netCDF file with output.files. If FALSE will return a list of spatRasters
 #'
 #' @return a dataframe output variable summarized by timestep for each area.names
@@ -16,7 +17,7 @@
 #' @export
 #' 
 
-make_2d_summary_ts = function(data.in,output.files,shp.file,area.names,var.name,agg.time,statistic,write.out = F){
+make_2d_summary_ts = function(data.in,output.files,shp.file,area.names,var.name,agg.time,tz = NA,statistic,touches =T,write.out = F){
   
   if(!is.na(shp.file)){
     shp.vect = terra::vect(shp.file)
@@ -37,8 +38,12 @@ make_2d_summary_ts = function(data.in,output.files,shp.file,area.names,var.name,
       stop('data.in needs to be either file names or spatRasters')
     } 
     
-    
     data.time = as.Date(terra::time(data))
+    if(!is.na(tz)){
+      data.time = as.Date(as.POSIXct(data.time,tz = tz),tz = tz)
+      terra::time(data) = data.time
+    }
+    
     if(agg.time == 'season'){
       month.season = data.frame(month=1:12,season =rep(1:4,each =3))
       data.month = as.numeric(format(data.time,format = "%m"))
@@ -51,12 +56,12 @@ make_2d_summary_ts = function(data.in,output.files,shp.file,area.names,var.name,
       
       shp.str = as.data.frame(shp.vect)
       which.att = which(apply(shp.str,2,function(x) all(area.names %in% x)))
-      which.area = which(shp.str[,which.att] %in% area.names)
+      which.area =  match(area.names,shp.str[,which.att])
       
       data.stat.area.ls = list()
       for(j in 1:length(area.names)){
         
-        area.data = terra::mask(data,shp.vect[which.area[j],])
+        area.data = terra::mask(data,shp.vect[which.area[j],], touches = touches)
         
         if(agg.time == 'season'){
           

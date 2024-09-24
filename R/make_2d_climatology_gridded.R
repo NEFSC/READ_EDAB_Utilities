@@ -42,7 +42,7 @@ make_2d_climatology_gridded <- function(data.in,write.out = F,output.files,shp.f
       
       shp.str = as.data.frame(shp.vect)
       which.att = which(apply(shp.str,2,function(x) all(area.names %in% x)))
-      which.area = which(shp.str[,which.att] %in% area.names)
+      which.area =  match(area.names,shp.str[,which.att])
       
       
       data.shp = terra::mask(data,shp.vect[which.area,])

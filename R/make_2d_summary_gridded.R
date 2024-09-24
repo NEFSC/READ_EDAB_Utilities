@@ -7,15 +7,17 @@
 #' @param shp.file  string. Shape file you wish to crop each input file to
 #' @param var.name string. Variable name you wish to extract 
 #' @param agg.time string. Whether to aggregate over. Passed to terra::tapp (e.g. "days", "months", or "years", "season", etc.)
+#' @param tz string. Time zone to convert. No correction if NA
 #' @param statistic string. Which statistic to calculate
 #' @param area.names character vector. Names of shape file areas you want to summarise
+#' @param touches logical. If TRUE, all cells touched by lines or polygons will be masked, not just those on the line render path, or whose center point is within the polygon
 #' @param write.out logical. If TRUE, will write a netCDF file with output.files. If FALSE will return a list of spatRasters
 #'
 #' @return netCDF file with same time dimensions as input file 
 #' 
 #' @export
 
-make_2d_summary_gridded <- function(data.in,write.out = F,output.files,shp.file,var.name,agg.time,statistic,area.names){
+make_2d_summary_gridded <- function(data.in,write.out = F,output.files,shp.file,var.name,agg.time,tz = NA,statistic,touches = T, area.names){
   
   if(!is.na(shp.file)){
     shp.vect = terra::vect(shp.file)
@@ -38,18 +40,25 @@ make_2d_summary_gridded <- function(data.in,write.out = F,output.files,shp.file,
     
     month.season = data.frame(month=1:12,season =rep(1:4,each =3))
     
+    data.time = as.Date(terra::time(data))
+    if(!is.na(tz)){
+      data.time = as.Date(as.POSIXct(data.time,tz = tz),tz = tz)
+      terra::time(data) = data.time
+    }
+    
+    
     if(!is.na(shp.file)){
       
       shp.str = as.data.frame(shp.vect)
       which.att = which(apply(shp.str,2,function(x) all(area.names %in% x)))
-      which.area = which(shp.str[,which.att] %in% area.names)
+      which.area =  match(area.names,shp.str[,which.att])
       
       
-      data.shp = terra::mask(data,shp.vect[which.area,])
+      data.shp = terra::mask(data,shp.vect[which.area,],touches = touches)
       
       if(agg.time == 'season'){
         
-        data.time = as.Date(terra::time(data.shp))
+        # data.time = as.Date(terra::time(data.shp))
         data.month = as.numeric(format(data.time,format = '%m'))
         data.season = month.season$season[data.month]
         data.stat = terra::tapp(data.shp,
@@ -64,7 +73,7 @@ make_2d_summary_gridded <- function(data.in,write.out = F,output.files,shp.file,
     }else{
       
       if(agg.time == 'season'){
-        data.time = as.Date(terra::time(data))
+        # data.time = as.Date(terra::time(data))
         data.month = as.numeric(format(data.time,format = '%m'))
         data.season = month.season$season[data.month]
         data.stat = terra::tapp(data,

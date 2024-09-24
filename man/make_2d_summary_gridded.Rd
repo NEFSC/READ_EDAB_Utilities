@@ -11,6 +11,7 @@ make_2d_summary_gridded(
   shp.file,
   var.name,
   agg.time,
+  tz = NA,
   statistic,
   area.names
 )
@@ -27,6 +28,8 @@ make_2d_summary_gridded(
 \item{var.name}{string. Variable name you wish to extract}
 
 \item{agg.time}{string. Whether to aggregate over. Passed to terra::tapp (e.g. "days", "months", or "years", "season", etc.)}
+
+\item{tz}{string. Time zone to convert. No correction if NA}
 
 \item{statistic}{string. Which statistic to calculate}
 

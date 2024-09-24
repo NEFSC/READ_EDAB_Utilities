@@ -41,7 +41,7 @@ make_2d_deg_day_gridded_nc <- function(data.in,write.out = F,output.files,shp.fi
       
       shp.str = as.data.frame(shp.vect)
       which.att = which(apply(shp.str,2,function(x) all(area.names %in% x)))
-      which.area = which(shp.str[,which.att] %in% area.names)
+      which.area =  match(area.names,shp.str[,which.att])
       
       
       data = terra::mask(data,shp.vect[which.area,])

@@ -11,6 +11,7 @@ make_2d_summary_ts(
   area.names,
   var.name,
   agg.time,
+  tz = NA,
   statistic,
   write.out = F
 )
@@ -25,6 +26,8 @@ make_2d_summary_ts(
 \item{var.name}{string. Variable name you wish to extract}
 
 \item{agg.time}{character. Time scale to calculate climatology over (days,doy, months,season, or  years)}
+
+\item{tz}{string. Time zone to convert. No correction if NA}
 
 \item{statistic}{string. Which statistic to calculate}
 

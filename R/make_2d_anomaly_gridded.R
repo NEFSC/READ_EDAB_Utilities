@@ -53,7 +53,7 @@ make_2d_anomaly_gridded = function(data.in,climatology,output.files,shp.file,var
       
       shp.str = as.data.frame(shp.vect)
       which.att = which(apply(shp.str,2,function(x) all(area.names %in% x)))
-      which.area = which(shp.str[,which.att] %in% area.names)
+      which.area =  match(area.names,shp.str[,which.att])
       
       
       data = terra::mask(data,shp.vect[which.area,])
