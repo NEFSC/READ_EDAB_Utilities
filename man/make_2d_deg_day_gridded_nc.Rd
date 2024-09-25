@@ -27,7 +27,7 @@ make_2d_deg_day_gridded_nc(
 
 \item{var.name}{string. Variable name you wish to extract}
 
-\item{statistic}{string. Which statistic to calculate ('dd' for degree days, 'nd' for number of days)}
+\item{statistic}{string. Which statistic to calculate ('dd' for degree days, 'nd' for number of days, 'nd.con' for max consecutive number of days)}
 
 \item{ref.value}{numeric. reference point value for threshold}
 

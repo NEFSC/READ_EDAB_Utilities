@@ -6,7 +6,7 @@
 #' @param output.files character vector of full output file names corresponding to each input file
 #' @param shp.file  string. Shape file you wish to crop each input file to
 #' @param var.name string. Variable name you wish to extract 
-#' @param statistic string. Which statistic to calculate ('dd' for degree days, 'nd' for number of days)
+#' @param statistic string. Which statistic to calculate ('dd' for degree days, 'nd' for number of days, 'nd.con' for max consecutive number of days)
 #' @param ref.value numeric. reference point value for threshold
 #' @param type string. How to use reference point ('above', 'below', or 'raw')
 #' @param area.names character vector. Names of shape file areas you want to summarise
@@ -63,6 +63,13 @@ make_2d_deg_day_gridded_nc <- function(data.in,write.out = F,output.files,shp.fi
         data.temp = (terra::clamp(data,lower = ref.value, upper = Inf,value =F)*0)+1
         data.stat = sum(data.temp,na.rm=T)
           
+      }else if(statistic == 'nd.con'){
+        
+        data.temp = (terra::clamp(data,lower = ref.value, upper = Inf,value =F)*0)+1
+        data.stat = terra::app(data.temp,fun = function(x){
+          l = rle(x)
+          return(max(l$lengths[which(l$values == 1)]))
+        })
       }else{
         
         warning('statistic needs to be "dd" or "nd"')
@@ -80,6 +87,14 @@ make_2d_deg_day_gridded_nc <- function(data.in,write.out = F,output.files,shp.fi
         data.temp = (terra::clamp(data,lower = -Inf, upper = ref.value, value =F)*0)+1
         data.stat = sum(data.temp,na.rm=T)
         
+      }else if(statistic == 'nd.con'){
+        
+        data.temp = (terra::clamp(data,lower = -Inf, upper = ref.value, value =F)*0)+1
+        data.stat = terra::app(data.temp,fun = function(x){
+          l = rle(x)
+          return(max(l$lengths[which(l$values == 1)]))
+        })
+
       }else{
         
         warning('statistic needs to be "dd" or "nd"')

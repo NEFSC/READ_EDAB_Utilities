@@ -58,7 +58,18 @@ make_2d_deg_day_ts = function(data.in,output.files,shp.file,area.names,var.name,
           dplyr::summarise(value = dplyr::n())%>%
           dplyr::mutate(statistic = statistic)
         
-      }else{
+      }else if(statistic == 'nd.con'){
+        
+        nd.con.fun = function(x){
+          l = rle(x)
+          return(max(l$lengths[which(l$values == 1)]))
+        }
+        data.stat =  data.summary[[i]]  %>%
+          dplyr::mutate(value.flag = value > ref.value)%>%
+          dplyr::group_by(agg.time,var.name,statistic,area)%>%
+          dplyr::summarise(statistic = nd.con.fun(value.flag))
+          
+       }else{
         
         warning('statistic needs to be "dd" or "nd"')
       }
@@ -82,8 +93,12 @@ make_2d_deg_day_ts = function(data.in,output.files,shp.file,area.names,var.name,
           dplyr::mutate(statistic = statistic)
         
         
+      }else if(statistic == 'nd.con'){
+        data.stat =  data.summary[[i]]  %>%
+          dplyr::mutate(value.flag = value < ref.value)%>%
+          dplyr::group_by(agg.time,var.name,statistic,area)%>%
+          dplyr::summarise(statistic = nd.con.fun(value.flag))
       }else{
-        
         warning('statistic needs to be "dd" or "nd"')
       }
     }

@@ -13,6 +13,7 @@ make_2d_summary_ts(
   agg.time,
   tz = NA,
   statistic,
+  touches = T,
   write.out = F
 )
 }
@@ -30,6 +31,8 @@ make_2d_summary_ts(
 \item{tz}{string. Time zone to convert. No correction if NA}
 
 \item{statistic}{string. Which statistic to calculate}
+
+\item{touches}{logical. If TRUE, all cells touched by lines or polygons will be masked, not just those on the line render path, or whose center point is within the polygon}
 
 \item{write.out}{logical. If TRUE, will write a netCDF file with output.files. If FALSE will return a list of spatRasters}
 }

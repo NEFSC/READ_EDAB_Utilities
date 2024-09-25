@@ -13,6 +13,7 @@ make_2d_summary_gridded(
   agg.time,
   tz = NA,
   statistic,
+  touches = T,
   area.names
 )
 }
@@ -32,6 +33,8 @@ make_2d_summary_gridded(
 \item{tz}{string. Time zone to convert. No correction if NA}
 
 \item{statistic}{string. Which statistic to calculate}
+
+\item{touches}{logical. If TRUE, all cells touched by lines or polygons will be masked, not just those on the line render path, or whose center point is within the polygon}
 
 \item{area.names}{character vector. Names of shape file areas you want to summarise}
 }
