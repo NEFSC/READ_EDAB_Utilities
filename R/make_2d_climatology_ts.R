@@ -11,6 +11,8 @@
 #'
 #' @return netCDF file with same time dimensions as input file 
 #' 
+#' @importFrom magrittr "%>%" 
+#' 
 #' @export
 
 make_2d_climatology_ts <- function(data.in,write.out = F,output.files,start.time, stop.time,statistic){

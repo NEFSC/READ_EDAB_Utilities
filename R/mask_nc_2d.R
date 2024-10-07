@@ -15,10 +15,17 @@
 #' 
 #' @export
 
-mask_nc_2d <- function(data.in,write.out = F,output.files,shp.file,var.name,min.value,max.value,binary = F){
+mask_nc_2d <- function(data.in,write.out = F,output.files,shp.file,var.name,min.value,max.value,binary = F,area.names =NA){
   
   if(!is.na(shp.file)){
     shp.vect = terra::vect(shp.file)
+    if(!is.na(area.names)){
+      shp.str = as.data.frame(shp.vect)
+      which.att = which(apply(shp.str,2,function(x) all(area.names %in% x)))
+      which.area =  match(area.names,shp.str[,which.att])
+      shp.vect = shp.vect[which.area]  
+    }
+    
   }
   
   out.ls = list()

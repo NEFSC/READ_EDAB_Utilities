@@ -14,6 +14,8 @@
 #'
 #' @return a dataframe output variable summarized by timestep for each area.names
 #' 
+#' @importFrom magrittr "%>%"
+#' 
 #' @export
 #' 
 

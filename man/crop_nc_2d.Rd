@@ -4,10 +4,17 @@
 \alias{crop_nc_2d}
 \title{Crops a 2D netCDF based on the extent of a shape file}
 \usage{
-crop_nc_2d(input.files, write.out = F, output.files, shp.file, var.name)
+crop_nc_2d(
+  data.in,
+  write.out = F,
+  output.files,
+  shp.file,
+  var.name,
+  area.names = NA
+)
 }
 \arguments{
-\item{input.files}{character vector of full input file names}
+\item{data.in}{character vector of full input file names}
 
 \item{write.out}{logical. If TRUE, will write a netCDF file with output.files. If FALSE will return a list of spatRasters}
 

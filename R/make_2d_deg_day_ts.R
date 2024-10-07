@@ -13,6 +13,8 @@
 #'
 #' @return a dataframe output variable summarized by timestep for each area.names
 #' 
+#' @importFrom magrittr "%>%"
+#' 
 #' @export
 
 
@@ -31,6 +33,13 @@ make_2d_deg_day_ts = function(data.in,output.files,shp.file,area.names,var.name,
                                     area.names =area.names)
   
   out.ls = list()
+  nd.con.fun = function(x){
+    l = rle(x)
+    m = l$lengths[which(l$values == 1)]
+    
+    return(ifelse(length(m) == 0, 0,max(m,na.rm=T)))
+  }
+  
   for(i in 1:length(data.summary)){
     
     if(type == 'raw'){
@@ -60,10 +69,7 @@ make_2d_deg_day_ts = function(data.in,output.files,shp.file,area.names,var.name,
         
       }else if(statistic == 'nd.con'){
         
-        nd.con.fun = function(x){
-          l = rle(x)
-          return(max(l$lengths[which(l$values == 1)]))
-        }
+
         data.stat =  data.summary[[i]]  %>%
           dplyr::mutate(value.flag = value > ref.value)%>%
           dplyr::group_by(agg.time,var.name,statistic,area)%>%

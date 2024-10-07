@@ -30,14 +30,15 @@ Crop the data based on the lat/lon bounds of epu.shp
 ```{r}
 
 data.crop = crop_nc_2d(
-  input.files = c(system.file('data','GLORYS_daily_BottomSalinity_2019.nc',package = 'EDABUtilities'),
+  data.in = c(system.file('data','GLORYS_daily_BottomSalinity_2019.nc',package = 'EDABUtilities'),
                   system.file('data','GLORYS_daily_BottomSalinity_2020.nc',package = 'EDABUtilities')),
   shp.file = epu.shp,
   var.name = var.name,
-  write.out = F
+  write.out = F,
+  area.names =NA
 )
 
-terra::plot(data.crop[[1]])
+terra::plot(data.crop[[2]])
 ```
 Filter values within min.S to max.S range and remove values outside of the epu.shp regions
 ```{R}
@@ -47,7 +48,8 @@ data.mask = mask_nc_2d(
   shp.file = epu.shp,
   min.value = min.S,
   max.value = max.S,
-  binary = F
+  binary = F,
+  area.names = NA
 )
 
 terra::plot(data.mask[[1]])

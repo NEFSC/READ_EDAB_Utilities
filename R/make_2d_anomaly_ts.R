@@ -8,6 +8,8 @@
 #' @param write.out logical. If TRUE, will write a netCDF file with output.files. If FALSE will return a list of spatRasters
 #' @param return a dataframe output variable summarized by timestep for each area.names
 #' 
+#' @importFrom magrittr "%>%"
+#' 
 #' @export
 #' 
 

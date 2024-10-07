@@ -2,7 +2,7 @@
 #'
 #' descriptions
 #'
-#' @param input.files character vector of full input file names
+#' @param data.in character vector of full input file names
 #' @param output.files character vector of full output file names corresponding to each input file
 #' @param shp.file  string. Shape file you wish to crop each input file to
 #' @param var.name string. Variable name you wish to extract 
@@ -12,20 +12,28 @@
 #' 
 #' @export
 
-crop_nc_2d <- function(input.files,write.out = F,output.files,shp.file,var.name){
+crop_nc_2d <- function(data.in,write.out = F,output.files,shp.file,var.name,area.names = NA){
   
-  if(!all(grepl('.nc',input.files))){
+  if(!all(grepl('.nc',data.in))){
     stop('All input files must be netCDF files')
   }
   
-  shp.vect = terra::vect(shp.file)
+  if(is.na(area.names)){
+    shp.vect = terra::vect(shp.file)  
+  }else{
+    shp.str = as.data.frame(shp.vect)
+    which.att = which(apply(shp.str,2,function(x) all(area.names %in% x)))
+    which.area =  match(area.names,shp.str[,which.att])
+    shp.vect = shp.vect[which.area]  
+  }
   
   data.out.ls = list()
-  for(i in 1:length(input.files)){
+  for(i in 1:length(data.in)){
     
-    data.in = terra::rast(input.files[i],subds = var.name)
+    # data.in = terra::rast(data.in[[i]],subds = var.name)
+    data.orig = terra::rast(data.in[i])
     
-    data.crop= terra::crop(data.in,shp.vect)
+    data.crop= terra::crop(data.orig,shp.vect)
     
     if(write.out){
       terra::writeCDF(data.crop,output.files[i],varname = var.name,overwrite =T)  

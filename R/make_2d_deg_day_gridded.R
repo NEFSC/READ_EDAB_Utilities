@@ -68,7 +68,9 @@ make_2d_deg_day_gridded_nc <- function(data.in,write.out = F,output.files,shp.fi
         data.temp = (terra::clamp(data,lower = ref.value, upper = Inf,value =F)*0)+1
         data.stat = terra::app(data.temp,fun = function(x){
           l = rle(x)
-          return(max(l$lengths[which(l$values == 1)]))
+          m = l$lengths[which(l$values == 1)]
+          
+          return(ifelse(length(m) == 0, 0,max(m,na.rm=T)))
         })
       }else{
         
@@ -92,7 +94,9 @@ make_2d_deg_day_gridded_nc <- function(data.in,write.out = F,output.files,shp.fi
         data.temp = (terra::clamp(data,lower = -Inf, upper = ref.value, value =F)*0)+1
         data.stat = terra::app(data.temp,fun = function(x){
           l = rle(x)
-          return(max(l$lengths[which(l$values == 1)]))
+          m = l$lengths[which(l$values == 1)]
+          
+          return(ifelse(length(m) == 0, 0,max(m,na.rm=T)))
         })
 
       }else{

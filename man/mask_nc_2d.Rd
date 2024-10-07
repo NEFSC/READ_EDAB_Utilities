@@ -12,7 +12,8 @@ mask_nc_2d(
   var.name,
   min.value,
   max.value,
-  binary = F
+  binary = F,
+  area.names = NA
 )
 }
 \arguments{
