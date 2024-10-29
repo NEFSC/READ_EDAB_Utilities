@@ -17,7 +17,7 @@
 
 mask_nc_2d <- function(data.in,write.out = F,output.files,shp.file =NA,var.name,min.value,max.value,binary = F,area.names =NA){
   
-  if(class(shp.file) %in% c('spatVector','spatRaster')){
+  if(class(shp.file) %in% c('SpatVector','SpatRaster')){
     shp.vect = shp.file
     use.shp =T
   }else if(!is.na(shp.file)){
