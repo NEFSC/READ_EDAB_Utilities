@@ -6,6 +6,7 @@ data.in = c(here::here('data','GLORYS_daily_BottomSalinity_2019.nc'),
 output.files = c(here::here('data','GLORYS_daily_BottomSalinity_EPU_mask_2019.nc'),
                 here::here('data','GLORYS_daily_BottomSalinity_EPU_mask_2020.nc'))
 shp.file = here::here('data','EPU_NOESTUARIES.shp')
+shp.file = terra:vect(shp.file)
 source(here::here('R','crop_nc_2d.R'))
 source(here::here('R','mask_nc_2d.R'))
 var.name = 'BottomS'      

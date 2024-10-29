@@ -8,7 +8,7 @@ mask_nc_2d(
   data.in,
   write.out = F,
   output.files,
-  shp.file,
+  shp.file = NA,
   var.name,
   min.value,
   max.value,
