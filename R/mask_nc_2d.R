@@ -50,6 +50,7 @@ mask_nc_2d <- function(data.in,write.out = F,output.files,shp.file =NA,var.name,
     } 
     
     if(use.shp){
+      data = terra::crop(data,shp.vect)
       data = terra::mask(data,shp.vect)  
     }
     

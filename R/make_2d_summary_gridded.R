@@ -19,10 +19,24 @@
 
 make_2d_summary_gridded <- function(data.in,write.out = F,output.files,shp.file,var.name,agg.time,tz = NA,statistic,touches = T, area.names){
   
-  if(!is.na(shp.file)){
+  if(class(shp.file) %in% c('SpatVector','SpatRaster')){
+    shp.vect = shp.file
+    use.shp =T
+  }else if(!is.na(shp.file)){
     shp.vect = terra::vect(shp.file)
+    use.shp =T
+  }else{
+    use.shp = F
   }
   
+  
+  if(all(!is.na(area.names))){
+    shp.str = as.data.frame(shp.vect)
+    which.att = which(apply(shp.str,2,function(x) all(area.names %in% x)))
+    which.area =  match(area.names,shp.str[,which.att])
+    shp.vect = shp.vect[which.area]  
+  }
+
   out.ls = list()
   for(i in 1:length(data.in)){
     
@@ -47,12 +61,7 @@ make_2d_summary_gridded <- function(data.in,write.out = F,output.files,shp.file,
     }
     
     
-    if(!is.na(shp.file)){
-      
-      shp.str = as.data.frame(shp.vect)
-      which.att = which(apply(shp.str,2,function(x) all(area.names %in% x)))
-      which.area =  match(area.names,shp.str[,which.att])
-      
+    if(use.shp){
       
       data.shp = terra::mask(data,shp.vect[which.area,],touches = touches)
       
