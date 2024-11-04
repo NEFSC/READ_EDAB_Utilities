@@ -19,8 +19,21 @@
 
 make_2d_climatology_gridded <- function(data.in,write.out = F,output.files,shp.file,var.name,area.names,start.time, stop.time,agg.time,statistic){
   
-  if(!is.na(shp.file)){
+  if(class(shp.file) %in% c('SpatVector','SpatRaster')){
+    shp.vect = shp.file
+    use.shp =T
+  }else if(!is.na(shp.file)){
     shp.vect = terra::vect(shp.file)
+    use.shp =T
+  }else{
+    use.shp = F
+  }
+  
+  if(all(!is.na(area.names))){
+    shp.str = as.data.frame(shp.vect)
+    which.att = which(apply(shp.str,2,function(x) all(area.names %in% x)))
+    which.area =  match(area.names,shp.str[,which.att])
+    shp.vect = shp.vect[which.area]  
   }
   
   data.time.agg.ls =list()
@@ -38,14 +51,9 @@ make_2d_climatology_gridded <- function(data.in,write.out = F,output.files,shp.f
       stop('data.in needs to be either file names or spatRasters')
     } 
     
-    if(!is.na(shp.file)){
-      
-      shp.str = as.data.frame(shp.vect)
-      which.att = which(apply(shp.str,2,function(x) all(area.names %in% x)))
-      which.area =  match(area.names,shp.str[,which.att])
-      
-      
-      data.shp = terra::mask(data,shp.vect[which.area,])
+    if(use.shp){
+
+      data.shp = terra::mask(data,shp.vect)
       data.time.agg = terra::tapp(data.shp,
                              index =agg.time,
                              fun = statistic)

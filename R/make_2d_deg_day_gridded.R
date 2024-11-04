@@ -18,8 +18,21 @@
 
 make_2d_deg_day_gridded_nc <- function(data.in,write.out = F,output.files,shp.file,var.name,statistic,ref.value,type,area.names){
   
-  if(!is.na(shp.file)){
+  if(class(shp.file) %in% c('SpatVector','SpatRaster')){
+    shp.vect = shp.file
+    use.shp =T
+  }else if(!is.na(shp.file)){
     shp.vect = terra::vect(shp.file)
+    use.shp =T
+  }else{
+    use.shp = F
+  }
+  
+  if(all(!is.na(area.names))){
+    shp.str = as.data.frame(shp.vect)
+    which.att = which(apply(shp.str,2,function(x) all(area.names %in% x)))
+    which.area =  match(area.names,shp.str[,which.att])
+    shp.vect = shp.vect[which.area]  
   }
   
   out.ls = list()
@@ -37,15 +50,12 @@ make_2d_deg_day_gridded_nc <- function(data.in,write.out = F,output.files,shp.fi
       stop('data.in needs to be either file names or spatRasters')
     } 
     
-    if(!is.na(shp.file)){
-      
-      shp.str = as.data.frame(shp.vect)
-      which.att = which(apply(shp.str,2,function(x) all(area.names %in% x)))
-      which.area =  match(area.names,shp.str[,which.att])
-      
-      
-      data = terra::mask(data,shp.vect[which.area,])
+    if(use.shp){
+
+      data = terra::mask(data,shp.vect)
     }
+    
+    data.mask = terra::subset(data,1) * 0
     
     if(type == 'raw'){
       
@@ -62,7 +72,7 @@ make_2d_deg_day_gridded_nc <- function(data.in,write.out = F,output.files,shp.fi
         
         data.temp = (terra::clamp(data,lower = ref.value, upper = Inf,value =F)*0)+1
         data.stat = sum(data.temp,na.rm=T)
-          
+        
       }else if(statistic == 'nd.con'){
         
         data.temp = (terra::clamp(data,lower = ref.value, upper = Inf,value =F)*0)+1
@@ -103,12 +113,15 @@ make_2d_deg_day_gridded_nc <- function(data.in,write.out = F,output.files,shp.fi
         
         warning('statistic needs to be "dd" or "nd"')
       }
+      
     }
+    
+    data.out = sum(data.stat,data.mask,na.rm=T)
     
     if(write.out){
       terra::writeCDF(data.stat, output.files[i],varname = paste0(var.name,'_',type,'_',ref.value,'_',statistic),overwrite =T)
     }else{
-      out.ls[[i]] = data.stat
+      out.ls[[i]] = data.out
     }
   }
   

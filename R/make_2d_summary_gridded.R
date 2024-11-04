@@ -63,7 +63,7 @@ make_2d_summary_gridded <- function(data.in,write.out = F,output.files,shp.file,
     
     if(use.shp){
       
-      data.shp = terra::mask(data,shp.vect[which.area,],touches = touches)
+      data.shp = terra::mask(data,shp.vect,touches = touches)
       
       if(agg.time == 'season'){
         
