@@ -21,8 +21,14 @@
 
 make_2d_summary_ts = function(data.in,output.files,shp.file,area.names,var.name,agg.time,tz = NA,statistic,touches =T,write.out = F){
   
-  if(all(!is.na(shp.file))){
+  if(class(shp.file) %in% c('SpatVector','SpatRaster')){
+    shp.vect = shp.file
+    use.shp =T
+  }else if(!is.na(shp.file)){
     shp.vect = terra::vect(shp.file)
+    use.shp =T
+  }else{
+    use.shp = F
   }
   
   out.ls = list()
