@@ -51,19 +51,25 @@ mask_nc_2d <- function(data.in,write.out = F,output.files,shp.file =NA,var.name,
     
     if(use.shp){
       data = terra::crop(data,shp.vect)
-      data = terra::mask(data,shp.vect)  
+      data = terra::mask(data,shp.vect) 
     }
+    
+    data.zero.mask = terra::subset(data,1)*0
     
     data.mask = terra::clamp(data, lower = min.value, upper = max.value, values = F)
     
     if(binary){
        data.mask = (data.mask*0)+1
+       data.out = sum(data.mask,data.zero.mask)
+    }else{
+      data.out = data.mask
     }
+    # data.out = sum(data.mask*data.zero.mask,na.rm=T)
     
     if(write.out){
-      terra::writeCDF(data.mask, output.files[i],varname = var.name,overwrite =T)
+      terra::writeCDF(data.out, output.files[i],varname = var.name,overwrite =T)
     }else{
-      out.ls[[i]] = data.mask
+      out.ls[[i]] = data.out
     }
   }
 

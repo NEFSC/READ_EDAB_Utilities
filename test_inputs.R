@@ -23,7 +23,7 @@ data.in = crop_nc_2d(
 )
 
 
-min.value = 30
+min.value = 40
 max.value = 50
 
 ref.value = 33

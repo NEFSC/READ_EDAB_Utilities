@@ -119,7 +119,7 @@ make_2d_deg_day_gridded_nc <- function(data.in,write.out = F,output.files,shp.fi
     data.out = sum(data.stat,data.mask,na.rm=T)
     
     if(write.out){
-      terra::writeCDF(data.stat, output.files[i],varname = paste0(var.name,'_',type,'_',ref.value,'_',statistic),overwrite =T)
+      terra::writeCDF(data.out, output.files[i],varname = paste0(var.name,'_',type,'_',ref.value,'_',statistic),overwrite =T)
     }else{
       out.ls[[i]] = data.out
     }

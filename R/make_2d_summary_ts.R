@@ -21,7 +21,7 @@
 
 make_2d_summary_ts = function(data.in,output.files,shp.file,area.names,var.name,agg.time,tz = NA,statistic,touches =T,write.out = F){
   
-  if(!is.na(shp.file)){
+  if(all(!is.na(shp.file))){
     shp.vect = terra::vect(shp.file)
   }
   
@@ -71,7 +71,7 @@ make_2d_summary_ts = function(data.in,output.files,shp.file,area.names,var.name,
           area.agg = terra::tapp(area.data,
                                  fun = statistic,
                                  index =data.season)
-          time.out = season.names
+          time.out = sort(unique(data.season))
         }else{
           area.agg = terra::tapp(area.data,
                                  fun = statistic,
@@ -96,7 +96,7 @@ make_2d_summary_ts = function(data.in,output.files,shp.file,area.names,var.name,
       if(agg.time == 'season'){
 
         data.agg = terra::tapp(data,fun =statistic,index = data.season)
-        time.out = season.names
+        time.out = sort(unique(data.season))
 
       }else{
         data.agg = terra::tapp(data,fun =statistic,index = agg.time)
