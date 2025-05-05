@@ -60,7 +60,7 @@ make_2d_summary_ts = function(data.in,output.files,shp.file,area.names,var.name,
     }
     
     
-    if(!is.na(shp.file)){
+    if(use.shp == T){
       
       shp.str = as.data.frame(shp.vect)
       which.att = which(apply(shp.str,2,function(x) all(area.names %in% x)))
