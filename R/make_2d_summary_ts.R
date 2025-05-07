@@ -46,6 +46,8 @@ make_2d_summary_ts = function(data.in,output.files,shp.file,area.names,var.name,
       stop('data.in needs to be either file names or spatRasters')
     } 
     
+    data = EDABUtilities::convert_longitude(data)
+    
     data.time = as.Date(terra::time(data))
     if(!is.na(tz)){
       data.time = as.Date(as.POSIXct(data.time,tz = tz),tz = tz)

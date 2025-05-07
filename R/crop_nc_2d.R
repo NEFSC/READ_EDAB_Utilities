@@ -33,6 +33,8 @@ crop_nc_2d <- function(data.in,write.out = F,output.files,shp.file,var.name,area
     # data.in = terra::rast(data.in[[i]],subds = var.name)
     data.orig = terra::rast(data.in[i])
     
+    data.orig = EDABUtilities::convert_longitude(data.orig)
+    
     data.crop= terra::crop(data.orig,shp.vect)
     
     if(write.out){

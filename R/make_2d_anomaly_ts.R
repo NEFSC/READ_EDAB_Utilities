@@ -32,6 +32,8 @@ make_2d_anomaly_ts  = function(data.in,climatology,output.files,write.out = F){
       stop('data.in needs to be either file names or data.frame')
     } 
     
+    data = EDABUtilities::convert_longitude(data)
+    
     #aggregate spatially if necessary
     
     data.comb =data %>%

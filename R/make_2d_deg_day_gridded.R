@@ -50,6 +50,8 @@ make_2d_deg_day_gridded_nc <- function(data.in,write.out = F,output.files,shp.fi
       stop('data.in needs to be either file names or spatRasters')
     } 
     
+    data = EDABUtilities::convert_longitude(data)
+    
     if(use.shp){
 
       data = terra::mask(data,shp.vect)

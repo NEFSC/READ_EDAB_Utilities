@@ -51,6 +51,8 @@ make_2d_climatology_gridded <- function(data.in,write.out = F,output.files,shp.f
       stop('data.in needs to be either file names or spatRasters')
     } 
     
+    data = EDABUtilities::convert_longitude(data)
+    
     if(use.shp){
 
       data.shp = terra::mask(data,shp.vect)

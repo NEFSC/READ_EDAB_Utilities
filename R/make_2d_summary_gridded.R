@@ -52,6 +52,8 @@ make_2d_summary_gridded <- function(data.in,write.out = F,output.files,shp.file,
       stop('data.in needs to be either file names or spatRasters')
     } 
     
+    data = EDABUtilities::convert_longitude(data)
+    
     month.season = data.frame(month=1:12,season =rep(1:4,each =3))
     
     data.time = as.Date(terra::time(data))
