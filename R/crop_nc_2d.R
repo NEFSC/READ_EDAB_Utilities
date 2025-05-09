@@ -21,6 +21,7 @@ crop_nc_2d <- function(data.in,write.out = F,output.files,shp.file,var.name,area
   if(is.na(area.names)){
     shp.vect = terra::vect(shp.file)  
   }else{
+    shp.vect = terra::vect(shp.file)  
     shp.str = as.data.frame(shp.vect)
     which.att = which(apply(shp.str,2,function(x) all(area.names %in% x)))
     which.area =  match(area.names,shp.str[,which.att])

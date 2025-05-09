@@ -32,8 +32,6 @@ make_2d_climatology_ts <- function(data.in,write.out = F,output.files,start.time
       stop('data.in needs to be either file names or data.frame')
     } 
     
-    data = EDABUtilities::convert_longitude(data)
-    
     #aggregate spatially if necessary
     out.ls[[i]] =data %>% 
       dplyr::filter(time >= start.time & time <= stop.time )
