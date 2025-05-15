@@ -3,6 +3,7 @@
 #' descriptions
 #'
 #' @param data.in Either a character vector of full input file names for a list of spatRasters
+#' @param file.time string. What time scale the input files are on ('daily','monthly','annual')? Assumes all monthly or annual files are on a daily timestep
 #' @param output.files character vector of full output file names corresponding to each input file
 #' @param shp.file  string. Shape file you wish to crop each input file to
 #' @param var.name string. Variable name you wish to extract 
@@ -19,8 +20,9 @@
 #' @export
 #' 
 
-make_2d_summary_ts = function(data.in,output.files,shp.file,area.names,var.name,agg.time,tz = NA,statistic,touches =T,write.out = F){
+make_2d_summary_ts = function(data.in,file.time,output.files,shp.file,area.names,var.name,agg.time,tz = NA,statistic,touches =T,write.out = F){
   
+
   if(class(shp.file) %in% c('SpatVector','SpatRaster')){
     shp.vect = shp.file
     use.shp =T
@@ -33,32 +35,57 @@ make_2d_summary_ts = function(data.in,output.files,shp.file,area.names,var.name,
   
   out.ls = list()
   for(i in 1:length(data.in)){
-    
-    if(is.character(data.in)){
+
+    if(file.time == 'annual'){
+      if(is.character(data.in)){
+        
+        data = terra::rast(data.in[i])
+        
+      }else if(class(data.in[[i]])[1] == 'SpatRaster'){
+        
+        data = data.in[[i]]
+        
+      }else{
+        stop('data.in needs to be either file names or spatRasters')
+      } 
+    }else if (file.time == 'daily'){
       
-      data = terra::rast(data.in[i])
+      if(is.character(data.in)){
+        
+        data = lapply(data.in,function(x) terra::rast(x))
+        file.date = as.Date(gsub( '.*_([0-9]{4})-([0-9]{2})-([0-9]{2}).*', '\\1-\\2-\\3', data.in))
+        
+      }else if(class(data.in[[i]])[1] == 'SpatRaster'){
+        
+        data = lapply(data.in,function(x) terra::rast(x))
+        file.date = as.Date(sapply(data,function(x) terra::time(x)) / 86400,origin = '1970-01-01')
+      }else{
+        stop('data.in needs to be either file names or spatRasters')
+      } 
       
-    }else if(class(data.in[[i]])[1] == 'SpatRaster'){
+      data = terra::rast(data)
+      terra::time(data) = file.date
       
-      data = data.in[[i]]
       
+    }else if(file.time == 'monthly'){
+      print('monthly files not yet implemented')
     }else{
-      stop('data.in needs to be either file names or spatRasters')
-    } 
-    
-    data.time = as.Date(terra::time(data))
+      stop('file.time must be either annual, daily, or monthly')
+    }
+
+    data.time = as.Date(terra::time(data[[i]]))
     if(!is.na(tz)){
       data.time = as.Date(as.POSIXct(data.time,tz = tz),tz = tz)
       terra::time(data) = data.time
     }
-    
+
     if(agg.time == 'season'){
       month.season = data.frame(month=1:12,season =rep(1:4,each =3))
       data.month = as.numeric(format(data.time,format = "%m"))
       data.season = month.season$season[data.month]
       season.names = 1:4
     }
-    
+
     
     if(use.shp == T){
       
@@ -69,7 +96,7 @@ make_2d_summary_ts = function(data.in,output.files,shp.file,area.names,var.name,
       data.stat.area.ls = list()
       for(j in 1:length(area.names)){
         
-        area.data = terra::mask(data,shp.vect[which.area[j],], touches = touches)
+        area.data = terra::crop(terra::mask(data,shp.vect[which.area[j],], touches = touches),shp.vect[which.area[j],])
         
         if(agg.time == 'season'){
           
