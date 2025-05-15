@@ -7,7 +7,7 @@
 #' @param output.files character vector of full output file names corresponding to each input file
 #' @param shp.file  string. Shape file you wish to crop each input file to
 #' @param var.name string. Variable name you wish to extract 
-#' @param statistic string. Which statistic to calculate
+#' @param statistics character vector. Which statistic to calculate
 #' @param agg.time character. Time scale to calculate climatology over (days,doy, months,season, or  years)
 #' @param tz string. Time zone to convert. No correction if NA
 #' @param touches logical. If TRUE, all cells touched by lines or polygons will be masked, not just those on the line render path, or whose center point is within the polygon
@@ -87,65 +87,71 @@ make_2d_summary_ts = function(data.in,file.time,output.files,shp.file,area.names
     }
 
     
-    if(use.shp == T){
-      
-      shp.str = as.data.frame(shp.vect)
-      which.att = which(apply(shp.str,2,function(x) all(area.names %in% x)))
-      which.area =  match(area.names,shp.str[,which.att])
-      
-      data.stat.area.ls = list()
-      for(j in 1:length(area.names)){
+    agg.stat.ls = list()
+    for(s in 1:length(statistics)){
+        if(use.shp == T){
         
-        area.data = terra::crop(terra::mask(data,shp.vect[which.area[j],], touches = touches),shp.vect[which.area[j],])
+        shp.str = as.data.frame(shp.vect)
+        which.att = which(apply(shp.str,2,function(x) all(area.names %in% x)))
+        which.area =  match(area.names,shp.str[,which.att])
+        
+        data.stat.area.ls = list()
+        for(j in 1:length(area.names)){
+          
+          area.data = terra::crop(terra::mask(data,shp.vect[which.area[j],], touches = touches),shp.vect[which.area[j],])
+          
+          if(agg.time == 'season'){
+            
+  
+            area.agg = terra::tapp(area.data,
+                                   fun = statistics[s],
+                                   index =data.season)
+            time.out = sort(unique(data.season))
+          }else{
+            area.agg = terra::tapp(area.data,
+                                   fun = statistics[s],
+                                   index =agg.time)  
+            time.out = terra::time(area.agg)
+          }
+          
+          area.stat = terra::global(area.agg,statistics[s],na.rm=T)
+          
+          data.stat.area.ls[[j]] = data.frame(time = time.out,
+                                              agg.time = agg.time,
+                                              ls.id = ifelse(is.character(data.in),data.in[i],i),
+                                              var.name = var.name,
+                                              statistic = statistics[s],
+                                              area = area.names[j],
+                                              value =area.stat[,1])
+        }
+        agg.stat.ls[[s]] = dplyr::bind_rows(data.stat.area.ls)
+        
+      }else{
         
         if(agg.time == 'season'){
-          
-
-          area.agg = terra::tapp(area.data,
-                                 fun = statistic,
-                                 index =data.season)
+  
+          data.agg = terra::tapp(data,fun =statistics[s],index = data.season)
           time.out = sort(unique(data.season))
+  
         }else{
-          area.agg = terra::tapp(area.data,
-                                 fun = statistic,
-                                 index =agg.time)  
-          time.out = terra::time(area.agg)
+          data.agg = terra::tapp(data,fun =statistics[s],index = agg.time)
+          time.out = terra::time(data.agg)
         }
         
-        area.stat = terra::global(area.agg,statistic,na.rm=T)
+        data.stat = terra::global(data.agg,statistics[s],na.rm=T)
         
-        data.stat.area.ls[[j]] = data.frame(time = time.out,
-                                            agg.time = agg.time,
-                                            ls.id = ifelse(is.character(data.in),data.in[i],i),
-                                            var.name = var.name,
-                                            statistic = statistic,
-                                            area = area.names[j],
-                                            value =area.stat[,1])
-      }
-      data.stat.df = dplyr::bind_rows(data.stat.area.ls)
-      
-    }else{
-      
-      if(agg.time == 'season'){
-
-        data.agg = terra::tapp(data,fun =statistic,index = data.season)
-        time.out = sort(unique(data.season))
-
-      }else{
-        data.agg = terra::tapp(data,fun =statistic,index = agg.time)
-        time.out = terra::time(data.agg)
+        agg.stat.ls[[s]] = data.frame(time = time.out,
+                                  agg.time =agg.time,
+                                  ls.id = ifelse(is.character(data.in),data.in[i],i),
+                                  var.name = var.name,
+                                  statistic = statistics[s],
+                                  area = NA,
+                                  value =data.stat[,1])
       }
       
-      data.stat = terra::global(data.agg,statistic,na.rm=T)
-      
-      data.stat.df = data.frame(time = time.out,
-                                agg.time =agg.time,
-                                ls.id = ifelse(is.character(data.in),data.in[i],i),
-                                var.name = var.name,
-                                statistic = statistic,
-                                area = NA,
-                                value =data.stat[,1])
     }
+    data.stat.df = dplyr::bind_rows(agg.stat.ls)
+    
     
     if(write.out){
       saveRDS(data.stat.df, output.files[i])
@@ -154,6 +160,7 @@ make_2d_summary_ts = function(data.in,file.time,output.files,shp.file,area.names
     }
 
   }
+    
   
   if(write.out ==F){
     return(out.ls)  

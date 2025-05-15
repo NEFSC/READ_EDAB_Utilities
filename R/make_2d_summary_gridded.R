@@ -9,7 +9,7 @@
 #' @param var.name string. Variable name you wish to extract 
 #' @param agg.time string. Whether to aggregate over. Passed to terra::tapp (e.g. "days", "months", or "years", "season", etc.)
 #' @param tz string. Time zone to convert. No correction if NA
-#' @param statistic string. Which statistic to calculate
+#' @param statistics character vector. Which statistic to calculate
 #' @param area.names character vector. Names of shape file areas you want to summarise
 #' @param touches logical. If TRUE, all cells touched by lines or polygons will be masked, not just those on the line render path, or whose center point is within the polygon
 #' @param write.out logical. If TRUE, will write a netCDF file with output.files. If FALSE will return a list of spatRasters
@@ -99,50 +99,52 @@ make_2d_summary_gridded <- function(data.in,write.out = F,file.time = 'annual',o
         terra::time(data) = data.time
       }
       
-      
-      if(use.shp){
-        
-        data.shp = terra::crop(terra::mask(data,shp.vect,touches = touches),shp.vect)
-        
-        if(agg.time == 'season'){
+      data.stat.ls = list()
+      for(j in 1:length(statistics)){
+        if(use.shp){
           
-          # data.time = as.Date(terra::time(data.shp))
-          data.month = as.numeric(format(data.time,format = '%m'))
-          data.season = month.season$season[data.month]
-          data.stat = terra::tapp(data.shp,
-                                  index =data.season,
-                                  fun = statistic)
-        }else{
-          data.stat = terra::tapp(data.shp,
-                                  index =agg.time,
-                                  fun = statistic)
-        }
-  
-      }else{
-        
-        if(agg.time == 'season'){
-          # data.time = as.Date(terra::time(data))
-          data.month = as.numeric(format(data.time,format = '%m'))
-          data.season = month.season$season[data.month]
-          data.stat = terra::tapp(data,
-                                  index =data.season,
-                                  fun = statistic)
-  
-        }else{
-          data.stat = terra::tapp(data,
-                                  index =agg.time,
-                                  fun = statistic)
-        }
-  
-        
+          data.shp = terra::crop(terra::mask(data,shp.vect,touches = touches),shp.vect)
+          
+          
+            if(agg.time == 'season'){
+              
+              # data.time = as.Date(terra::time(data.shp))
+              data.month = as.numeric(format(data.time,format = '%m'))
+              data.season = month.season$season[data.month]
+              data.stat.ls[[j]] = terra::tapp(data.shp,
+                                              index =data.season,
+                                              fun = statistics[j])
+            }else{
+              data.stat.ls[[j]] = terra::tapp(data.shp,
+                                              index =agg.time,
+                                              fun = statistics[j])
+              }
+          }else{
+          
+            if(agg.time == 'season'){
+              # data.time = as.Date(terra::time(data))
+              data.month = as.numeric(format(data.time,format = '%m'))
+              data.season = month.season$season[data.month]
+              data.stat.ls[[j]] = terra::tapp(data,
+                                      index =data.season,
+                                      fun = statistics[j])
+      
+            }else{
+              data.stat.ls[[j]] = terra::tapp(data,
+                                      index =agg.time,
+                                      fun = statistics[j])
+            }
+          }
       }
+      data.stat = sds(data.stat.ls)
+      names(data.stat) = paste0(var.name,'_',statistics)
       
       if(write.out){
-        terra::writeCDF(data.stat, output.files[i],varname = paste0(var.name,'_',statistic),overwrite =T)
+        terra::writeCDF(data.stat, output.files[i],overwrite =T)
       }else{
         out.ls[[i]] = data.stat
       }
-    }
+  }
 
   if(write.out ==F){
     return(out.ls)  
