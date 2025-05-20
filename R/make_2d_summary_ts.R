@@ -20,7 +20,7 @@
 #' @export
 #' 
 
-make_2d_summary_ts = function(data.in,file.time,output.files,shp.file,area.names,var.name,agg.time,tz = NA,statistic,touches =T,write.out = F){
+make_2d_summary_ts = function(data.in,file.time,output.files,shp.file,area.names,var.name,agg.time,tz = NA,statistics,touches =T,write.out = F){
   
 
   if(class(shp.file) %in% c('SpatVector','SpatRaster')){

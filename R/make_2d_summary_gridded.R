@@ -18,7 +18,7 @@
 #' 
 #' @export
 
-make_2d_summary_gridded <- function(data.in,write.out = F,file.time = 'annual',output.files,shp.file,var.name,agg.time,tz = NA,statistic,touches = T, area.names){
+make_2d_summary_gridded <- function(data.in,write.out = F,file.time = 'annual',output.files,shp.file,var.name,agg.time,tz = NA,statistics,touches = T, area.names){
   
   if(class(shp.file) %in% c('SpatVector','SpatRaster')){
     shp.vect = shp.file
@@ -136,7 +136,7 @@ make_2d_summary_gridded <- function(data.in,write.out = F,file.time = 'annual',o
             }
           }
       }
-      data.stat = sds(data.stat.ls)
+      data.stat = terra::sds(data.stat.ls)
       names(data.stat) = paste0(var.name,'_',statistics)
       
       if(write.out){
