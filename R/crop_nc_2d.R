@@ -21,6 +21,7 @@ crop_nc_2d <- function(data.in,write.out = F,output.files,shp.file,var.name,area
   if(is.na(area.names)){
     shp.vect = terra::vect(shp.file)  
   }else{
+    shp.vect = terra::vect(shp.file)  
     shp.str = as.data.frame(shp.vect)
     which.att = which(apply(shp.str,2,function(x) all(area.names %in% x)))
     which.area =  match(area.names,shp.str[,which.att])
@@ -32,6 +33,8 @@ crop_nc_2d <- function(data.in,write.out = F,output.files,shp.file,var.name,area
     
     # data.in = terra::rast(data.in[[i]],subds = var.name)
     data.orig = terra::rast(data.in[i])
+    
+    data.orig = EDABUtilities::convert_longitude(data.orig)
     
     data.crop= terra::crop(data.orig,shp.vect)
     
