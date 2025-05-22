@@ -30,6 +30,7 @@ make_2d_deg_day_ts = function(data.in,output.files,shp.file,area.names,var.name,
                                     var.name = var.name,
                                     agg.time = 'days',
                                     statistic = 'mean',
+                                    file.time = 'annual',
                                     area.names =area.names)
   
   out.ls = list()
