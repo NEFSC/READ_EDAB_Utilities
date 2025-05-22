@@ -48,6 +48,8 @@ make_2d_summary_ts = function(data.in,file.time,output.files,shp.file,area.names
       }else{
         stop('data.in needs to be either file names or spatRasters')
       } 
+      
+      file.date = terra::time(data)
     }else if (file.time == 'daily'){
       
       if(is.character(data.in)){
@@ -73,15 +75,14 @@ make_2d_summary_ts = function(data.in,file.time,output.files,shp.file,area.names
       stop('file.time must be either annual, daily, or monthly')
     }
 
-    data.time = as.Date(terra::time(data[[i]]))
     if(!is.na(tz)){
-      data.time = as.Date(as.POSIXct(data.time,tz = tz),tz = tz)
-      terra::time(data) = data.time
+      file.date = as.Date(as.POSIXct(file.date,tz = tz),tz = tz)
+      terra::time(data) = file.date
     }
 
     if(agg.time == 'season'){
       month.season = data.frame(month=1:12,season =rep(1:4,each =3))
-      data.month = as.numeric(format(data.time,format = "%m"))
+      data.month = as.numeric(format(file.date,format = "%m"))
       data.season = month.season$season[data.month]
       season.names = 1:4
     }

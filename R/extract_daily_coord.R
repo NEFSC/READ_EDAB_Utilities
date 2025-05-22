@@ -17,14 +17,14 @@
 #' 
 
 # input.dir = 'C:/Users/Joseph.Caracappa/Documents/Data/GLORYS/GLORYS_daily/'
-input.dir = 'C:/Data/GLORYS/Daily_Bottom_Temp/2022/'
-# input.prefix = 'GLORYS_daily_BottomTemp'
-input.prefix = 'GLORYS_REANALYSIS_'
-input.type = 'daily'
-output.dir = 'C:/Users/joseph.caracappa/Documents/Data/GLORYS/bts_stations/'
-output.prefix = 'bottom_trawl_survey_stations_GLORYS_2022_'
-coordinates = readRDS(here::here('data-raw','station_locations.rds')) %>% rename(lat = 'LAT',lon = 'LON',date = 'EST_TOWDATE')
-var.name = 'theao'
+# input.dir = 'C:/Data/GLORYS/Daily_Bottom_Temp/2022/'
+# # input.prefix = 'GLORYS_daily_BottomTemp'
+# input.prefix = 'GLORYS_REANALYSIS_'
+# input.type = 'daily'
+# output.dir = 'C:/Users/joseph.caracappa/Documents/Data/GLORYS/bts_stations/'
+# output.prefix = 'bottom_trawl_survey_stations_GLORYS_2022_'
+# coordinates = readRDS(here::here('data-raw','station_locations.rds')) %>% rename(lat = 'LAT',lon = 'LON',date = 'EST_TOWDATE')
+# var.name = 'theao'
 
 
 extract_daily_coord = function(input.dir, input.prefix, output.dir, output.prefix, coordinates){
