@@ -2,13 +2,9 @@
 
 # library(dplyr)
 pak::pak("NEFSC/READ_EDAB_Utilities@dev")
-# Install error: Error in rename(., lat = "LAT", lon = "LON", date = "EST_TOWDATE") : 
-                #could not find function "rename"
-#find_files("rename") - commented out lines of code in "extract_daily_coord.R" where "rename(., lat = "LAT", lon = "LON", date = "EST_TOWDATE")" is
-# devtools::load_all()
 
 convert_longitude(data = here::here('data/sst_test.nc'))
-convert_longitude(data = here::here('data/GLORYS_daily_BottomSalinity_2019.nc'))
+test <- convert_longitude(data = here::here('data/GLORYS_daily_BottomSalinity_2019.nc'))
 
 
 test_glorys <- make_2d_summary_ts(data.in = here::here('data','GLORYS_daily_BottomSalinity_2019.nc'),
@@ -39,9 +35,13 @@ test_sst <- make_2d_summary_ts(data.in = here::here('data','sst_test.nc'),
 #Error in h(simpleError(msg, call)) : 
  # error in evaluating the argument 'x' in selecting a method for function 'crop': unable to find an inherited method for function ‘mask’ for signature ‘x = "function", mask = "SpatVector"’
 
-#Errors out because EDABUtilites package cannot install
+# works
 test_epu <- crop_nc_2d(data.in = here::here('data','GLORYS_daily_BottomSalinity_2019.nc'),
                        output.files = here::here('data','GLORYS_daily_BottomSalinity_EPU_2019.nc'),
                        shp.file = here::here('data','EPU_NOESTUARIES.shp'),
                        var.name = 'BottomS',
                        write.out = F)
+
+terra::plot(test_epu)
+# Error in xy.coords(x, y, xlabel, ylabel, log) : 
+#   'x' is a list, but does not have components 'x' and 'y'
