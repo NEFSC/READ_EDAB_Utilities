@@ -3,6 +3,7 @@
 pak::pak("https://github.com/NEFSC/READ_EDAB_Utilities")
 # Install error: Error in rename(., lat = "LAT", lon = "LON", date = "EST_TOWDATE") : 
                 #could not find function "rename"
+#find_files("rename") - commented out lines of code in "extract_daily_coord.R" where "rename(., lat = "LAT", lon = "LON", date = "EST_TOWDATE")" is
 
 convert_longitude(data = here::here('data/sst_test.nc'))
 convert_longitude(data = here::here('data/GLORYS_daily_BottomDalinity_2019.nc'))
