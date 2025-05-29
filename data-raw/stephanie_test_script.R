@@ -1,15 +1,14 @@
 # stephanie test script
 
-pak::pak("https://github.com/NEFSC/READ_EDAB_Utilities")
+# library(dplyr)
+# pak::pak("https://github.com/NEFSC/READ_EDAB_Utilities")
 # Install error: Error in rename(., lat = "LAT", lon = "LON", date = "EST_TOWDATE") : 
                 #could not find function "rename"
 #find_files("rename") - commented out lines of code in "extract_daily_coord.R" where "rename(., lat = "LAT", lon = "LON", date = "EST_TOWDATE")" is
+devtools::load_all()
 
 convert_longitude(data = here::here('data/sst_test.nc'))
-convert_longitude(data = here::here('data/GLORYS_daily_BottomDalinity_2019.nc'))
-# Error for both inputs: 
-#Error: unable to find an inherited method for function ‘ext’ for signature ‘x = "character"’"
-
+convert_longitude(data = here::here('data/GLORYS_daily_BottomSalinity_2019.nc'))
 
 
 test_glorys <- make_2d_summary_ts(data.in = here::here('data','GLORYS_daily_BottomSalinity_2019.nc'),
