@@ -26,7 +26,7 @@ convert_longitude = function(data){
   }else if(all(lon.range >= -180) && all(lon.range <=180)){
     
     print('Already standard format (-180:180)')
-    return(data_in)
+    return(data)
     
   }else{
     
