@@ -4,6 +4,8 @@
 # pak::pak("NEFSC/READ_EDAB_Utilities@dev")
 library(EDABUtilities)
 
+library("EDABUtilities")
+
 convert_longitude(data = here::here('data/sst_test.nc'))
 test <- convert_longitude(data = here::here('data/GLORYS_daily_BottomSalinity_2019.nc'))
 
@@ -46,3 +48,7 @@ test_epu <- crop_nc_2d(data.in = here::here('data','GLORYS_daily_BottomSalinity_
 terra::plot(test_epu[[1]])
 # Error in xy.coords(x, y, xlabel, ylabel, log) : 
 #   'x' is a list, but does not have components 'x' and 'y'
+
+img <- terra::plot(test_epu[[1]])
+img
+# returns NULL
