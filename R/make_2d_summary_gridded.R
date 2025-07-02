@@ -64,6 +64,8 @@ make_2d_summary_gridded <- function(data.in,write.out = F,file.time = 'annual',o
         }else{
           stop('data.in needs to be either file names or spatRasters')
         } 
+        
+        file.date = terra::time(data)
       }else if (file.time == 'daily'){
         
         if(is.character(data.in)){
@@ -93,10 +95,10 @@ make_2d_summary_gridded <- function(data.in,write.out = F,file.time = 'annual',o
    
       data = EDABUtilities::convert_longitude(data)
       
-      data.time = as.Date(terra::time(data))
+      file.date = as.Date(terra::time(data))
       if(!is.na(tz)){
-        data.time = as.Date(as.POSIXct(data.time,tz = tz),tz = tz)
-        terra::time(data) = data.time
+        file.date = as.Date(as.POSIXct(file.date,tz = tz),tz = tz)
+        terra::time(data) = file.date
       }
       
       data.stat.ls = list()
@@ -109,7 +111,7 @@ make_2d_summary_gridded <- function(data.in,write.out = F,file.time = 'annual',o
             if(agg.time == 'season'){
               
               # data.time = as.Date(terra::time(data.shp))
-              data.month = as.numeric(format(data.time,format = '%m'))
+              data.month = as.numeric(format(file.date,format = '%m'))
               data.season = month.season$season[data.month]
               data.stat.ls[[j]] = terra::tapp(data.shp,
                                               index =data.season,

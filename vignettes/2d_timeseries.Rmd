@@ -10,7 +10,8 @@ vignette: >
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
-  comment = "#>"
+  comment = "#>",
+  error = TRUE
 )
 ```
 
@@ -62,7 +63,8 @@ data.ts = make_2d_summary_ts(data.in = data.mask,
                            var.name = var.name,
                            agg.time ='months',
                            statistic = 'mean',
-                           area.names = c('MAB','GB'),
+                           file.time = 'annual',
+                           area.names = c('MAB','GB','GOM'),
                            write.out = F)
 
 ggplot2::ggplot(data.ts[[1]],ggplot2::aes(x = time, y= value))+

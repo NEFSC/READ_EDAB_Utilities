@@ -17,14 +17,14 @@
 #' 
 
 # input.dir = 'C:/Users/Joseph.Caracappa/Documents/Data/GLORYS/GLORYS_daily/'
-input.dir = 'C:/Data/GLORYS/Daily_Bottom_Temp/2022/'
-# input.prefix = 'GLORYS_daily_BottomTemp'
-input.prefix = 'GLORYS_REANALYSIS_'
-input.type = 'daily'
-output.dir = 'C:/Users/joseph.caracappa/Documents/Data/GLORYS/bts_stations/'
-output.prefix = 'bottom_trawl_survey_stations_GLORYS_2022_'
-coordinates = readRDS(here::here('data-raw','station_locations.rds')) %>% rename(lat = 'LAT',lon = 'LON',date = 'EST_TOWDATE')
-var.name = 'theao'
+# input.dir = 'C:/Data/GLORYS/Daily_Bottom_Temp/2022/'
+# # input.prefix = 'GLORYS_daily_BottomTemp'
+# input.prefix = 'GLORYS_REANALYSIS_'
+# input.type = 'daily'
+# output.dir = 'C:/Users/joseph.caracappa/Documents/Data/GLORYS/bts_stations/'
+# output.prefix = 'bottom_trawl_survey_stations_GLORYS_2022_'
+# coordinates = readRDS(here::here('data-raw','station_locations.rds')) %>% rename(lat = 'LAT',lon = 'LON',date = 'EST_TOWDATE')
+# var.name = 'theao'
 
 
 extract_daily_coord = function(input.dir, input.prefix, output.dir, output.prefix, coordinates){
@@ -58,7 +58,7 @@ extract_daily_coord = function(input.dir, input.prefix, output.dir, output.prefi
   coordinates$date = as.Date(coordinates$date)
   
   output.ls = list()
-
+  
   if(input.type == 'daily'){
     #match dates in input.files to coodinates
     coord.dates = sort(unique(as.Date(output.df$date)))
@@ -101,63 +101,63 @@ extract_daily_coord = function(input.dir, input.prefix, output.dir, output.prefi
       
       
       
-     ##should return a list of dataframes##
-        if(search.radius > 0){
+      ##should return a list of dataframes##
+      if(search.radius > 0){
+        
+        #extract a in a ring around a coordinate match
+        val.product.rc = terra::rowColFromCell(this.data,this.coords.vals$cell) %>%
+          as.data.frame() %>%
+          dplyr::rename(x.center = 'V1',y.center = 'V2')%>%
+          dplyr::mutate(center.cell = this.coords.vals$cell,
+                        x.min = x.center - search.radius,
+                        x.max = x.center + search.radius,
+                        y.min = y.center - search.radius,
+                        y.max = y.center + search.radius)
+        
+        output.stat.ls = list()
+        for(k in 1:nrow(val.product.rc)){
+          #get the row and column for this coordinate
+          this.row = val.product.rc$x.center[k]
+          this.col = val.product.rc$y.center[k]
           
-          #extract a in a ring around a coordinate match
-          val.product.rc = terra::rowColFromCell(this.data,this.coords.vals$cell) %>%
-            as.data.frame() %>%
-            dplyr::rename(x.center = 'V1',y.center = 'V2')%>%
-            dplyr::mutate(center.cell = this.coords.vals$cell,
-                          x.min = x.center - search.radius,
-                          x.max = x.center + search.radius,
-                          y.min = y.center - search.radius,
-                          y.max = y.center + search.radius)
+          #get the rows and columns for the box
+          this.row.range = (this.row - search.radius):(this.row + search.radius)
+          this.col.range = (this.col - search.radius):(this.col + search.radius)
           
-          output.stat.ls = list()
-          for(k in 1:nrow(val.product.rc)){
-            #get the row and column for this coordinate
-            this.row = val.product.rc$x.center[k]
-            this.col = val.product.rc$y.center[k]
-            
-            #get the rows and columns for the box
-            this.row.range = (this.row - search.radius):(this.row + search.radius)
-            this.col.range = (this.col - search.radius):(this.col + search.radius)
-            
-            #get the cells in the box
-            this.box.cells = terra::cellFromRowCol(this.data,rep(this.row.range, length(this.col.range)),rep(this.col.range,each = length(this.col.range)))
-            
-            #extract from raster
-            this.box.vals = terra::extract(this.date.rast,this.box.cells)[,1]
-            
-            #get the summary statistics for this box
-            output.stat.ls[[k]] = lapply(statistics, function(stat){
-              if(stat == 'mean'){
-                this.box.stat = mean(this.box.vals, na.rm = T)
-              }else if(stat == 'median'){
-                this.box.stat = median(this.box.vals, na.rm = T)
-              }else if(stat == 'min'){
-                this.box.stat = min(this.box.vals, na.rm = T)
-              }else if(stat == 'max'){
-                this.box.stat = max(this.box.vals, na.rm = T)
-              }else if(stat == 'sd'){
-                this.box.stat = sd(this.box.vals, na.rm = T)
-              }else if(stat == 'var'){
-                this.box.stat = var(this.box.vals, na.rm = T)
-              }else if(stat == 'sum'){
-                this.box.stat = sum(this.box.vals, na.rm = T)
-              }
-              stat.out = val.product.rc[k,] %>%
-                dplyr::mutate(statistic = stat,value = this.box.stat)
-              return(stat.out)
-            })%>%
-              dplyr::bind_rows()
-            
-          }
-          output.stat.df = dplyr::bind_rows(output.stat.ls) %>%
-            left_join(out.match)
+          #get the cells in the box
+          this.box.cells = terra::cellFromRowCol(this.data,rep(this.row.range, length(this.col.range)),rep(this.col.range,each = length(this.col.range)))
           
-          output.ls[[i]] = output.stat.df
+          #extract from raster
+          this.box.vals = terra::extract(this.date.rast,this.box.cells)[,1]
+          
+          #get the summary statistics for this box
+          output.stat.ls[[k]] = lapply(statistics, function(stat){
+            if(stat == 'mean'){
+              this.box.stat = mean(this.box.vals, na.rm = T)
+            }else if(stat == 'median'){
+              this.box.stat = median(this.box.vals, na.rm = T)
+            }else if(stat == 'min'){
+              this.box.stat = min(this.box.vals, na.rm = T)
+            }else if(stat == 'max'){
+              this.box.stat = max(this.box.vals, na.rm = T)
+            }else if(stat == 'sd'){
+              this.box.stat = sd(this.box.vals, na.rm = T)
+            }else if(stat == 'var'){
+              this.box.stat = var(this.box.vals, na.rm = T)
+            }else if(stat == 'sum'){
+              this.box.stat = sum(this.box.vals, na.rm = T)
+            }
+            stat.out = val.product.rc[k,] %>%
+              dplyr::mutate(statistic = stat,value = this.box.stat)
+            return(stat.out)
+          })%>%
+            dplyr::bind_rows()
+          
+        }
+        output.stat.df = dplyr::bind_rows(output.stat.ls) %>%
+          left_join(out.match)
+        
+        output.ls[[i]] = output.stat.df
       }
       
     }
@@ -204,16 +204,16 @@ extract_daily_coord = function(input.dir, input.prefix, output.dir, output.prefi
         
         ## change to index
         out.match = data.frame(lon.obs = this.coords[,1],
-                   lat.obs = this.coords[,2],
-                   lon.product = val.product.coords[,1],
-                   lat.product = val.product.coords[,2],
-                   center.value = this.coords.vals[,2],
-                   date = as.Date(coord.year.dates[j]),
-                   var.name = var.name,
-                   search.radius = search.radius,
-                   center.cell = this.coords.vals$cell,
-                   stringsAsFactors = F)
-         output.ls[[ind]] = out.match
+                               lat.obs = this.coords[,2],
+                               lon.product = val.product.coords[,1],
+                               lat.product = val.product.coords[,2],
+                               center.value = this.coords.vals[,2],
+                               date = as.Date(coord.year.dates[j]),
+                               var.name = var.name,
+                               search.radius = search.radius,
+                               center.cell = this.coords.vals$cell,
+                               stringsAsFactors = F)
+        output.ls[[ind]] = out.match
         
         
         #Do search radius
@@ -228,7 +228,7 @@ extract_daily_coord = function(input.dir, input.prefix, output.dir, output.prefi
                         y.max = y.center + search.radius)
         
         #loop through val.product.rc and extract box defined by x1,x2,y1,y2
-       
+        
         
         ##should return a list of dataframes##
         if(search.radius > 0){
@@ -274,7 +274,7 @@ extract_daily_coord = function(input.dir, input.prefix, output.dir, output.prefi
           }
           output.stat.df = dplyr::bind_rows(output.stat.ls) %>%
             left_join(out.match)
-            
+          
           output.ls[[ind]] = output.stat.df
         }
         
