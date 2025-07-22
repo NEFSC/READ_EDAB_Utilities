@@ -2,6 +2,7 @@
 
 export(convert_longitude)
 export(crop_nc_2d)
+export(extract_daily_coord)
 export(make_2d_anomaly_gridded)
 export(make_2d_anomaly_ts)
 export(make_2d_climatology_gridded)
