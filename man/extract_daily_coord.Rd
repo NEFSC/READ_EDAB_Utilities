@@ -7,9 +7,13 @@
 extract_daily_coord(
   input.dir,
   input.prefix,
+  input.type,
   output.dir,
   output.prefix,
-  coordinates
+  coordinates,
+  search.radius = 0,
+  var.name,
+  statistics
 )
 }
 \arguments{
@@ -17,15 +21,17 @@ extract_daily_coord(
 
 \item{input.prefix}{string. The prefix of the input files}
 
+\item{input.type}{string. The type of input data (e.g., 'daily', 'annual'), assumes data within at daily scale}
+
 \item{output.dir}{string. The full output directory for the gridded data}
 
 \item{output.prefix}{string. The prefix of the output files}
 
 \item{coordinates}{dataframe of lat, lon, and date to be extracted from daily data}
 
-\item{input.type}{string. The type of input data (e.g., 'daily', 'annual'), assumes data within at daily scale}
-
 \item{search.radius}{numeric. The number of cell "rings" around the closest match to aggregate over. 0 = closest cell, 1 = 3x3 cells around closest, etc}
+
+\item{var.name}{string. The name of the variable being extracted, used for output file naming}
 
 \item{statistics}{character vector. The statistics to be used for the gridded data. Options are 'mean', 'median', 'min', 'max', 'sd', 'var', 'sum'}
 }
