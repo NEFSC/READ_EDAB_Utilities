@@ -10,23 +10,32 @@
 #' 
 convert_longitude = function(data){
   
-  data_in <- data |>
-    terra::rast()
+  if(!(class(data) %in% c('SpatRaster', 'SpatVector')) ){
+    data_in <- data |>
+      terra::rast()
+  }else{
+    data_in <- data
+  }
   
   dat.ext = data_in |>
     terra::ext()
   
-  lon.range = dat.ext[c(1,2)]
+  xmin = dat.ext[1]
+  xmax = dat.ext[2]
   
-  if(all(lon.range >=0) && all(lon.range<=360)){
+  
+  if(xmin >= -0.001 && xmax <= 360.001 && xmax > 180.001){
     
-      #convert to -180 to 180
-      return(terra::rotate(data_in))  
+    message("Detected longitude range approximately 0-360. Converting to -180 to +180.")
+    # rast_converted <- terra::shift(data_in, dx = -180)
+    rast_converted = terra::rotate(data_in)
+    # plot(a)
+    return(rast_converted)  
 
-  }else if(all(lon.range >= -180) && all(lon.range <=180)){
+  }else if(xmin >= -180.001 && xmax <= 180.001){
     
     print('Already standard format (-180:180)')
-    return(data)
+    return(data_in)
     
   }else{
     
