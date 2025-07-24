@@ -8,7 +8,7 @@ library(terra)
 library("EDABUtilities")
 
 test=rast(here::here('data/sst_test.nc'))
-test.rotate <- rotate(test,left = F)
+test.rotate <- rotate(test)
 plot(test)
 plot(test.rotate)
 test_glorys <- EDABUtilities::make_2d_summary_ts(data.in = here::here('data','GLORYS_daily_BottomSalinity_2019.nc'),
