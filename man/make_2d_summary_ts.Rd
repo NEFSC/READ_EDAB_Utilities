@@ -6,19 +6,22 @@
 \usage{
 make_2d_summary_ts(
   data.in,
+  file.time,
   output.files,
   shp.file,
   area.names,
   var.name,
   agg.time,
   tz = NA,
-  statistic,
+  statistics,
   touches = T,
   write.out = F
 )
 }
 \arguments{
 \item{data.in}{Either a character vector of full input file names for a list of spatRasters}
+
+\item{file.time}{string. What time scale the input files are on ('daily','monthly','annual')? Assumes all monthly or annual files are on a daily timestep}
 
 \item{output.files}{character vector of full output file names corresponding to each input file}
 
@@ -30,7 +33,7 @@ make_2d_summary_ts(
 
 \item{tz}{string. Time zone to convert. No correction if NA}
 
-\item{statistic}{string. Which statistic to calculate}
+\item{statistics}{character vector. Which statistic to calculate}
 
 \item{touches}{logical. If TRUE, all cells touched by lines or polygons will be masked, not just those on the line render path, or whose center point is within the polygon}
 

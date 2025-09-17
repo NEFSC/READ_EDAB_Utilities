@@ -3,16 +3,17 @@
 # library(dplyr)
 # pak::pak("NEFSC/READ_EDAB_Utilities@dev")
 library(EDABUtilities)
+library(terra)
 
 library("EDABUtilities")
 
-convert_longitude(data = here::here('data/sst_test.nc'))
-test <- convert_longitude(data = here::here('data/GLORYS_daily_BottomSalinity_2019.nc'))
-
-
-test_glorys <- make_2d_summary_ts(data.in = here::here('data','GLORYS_daily_BottomSalinity_2019.nc'),
+test=rast(here::here('data/sst_test.nc'))
+test.rotate <- rotate(test)
+plot(test)
+plot(test.rotate)
+test_glorys <- EDABUtilities::make_2d_summary_ts(data.in = here::here('data','GLORYS_daily_BottomSalinity_2019.nc'),
                            output.files = here::here('data','GLORYS_BottomS.nc'),
-                           file.time = 'monthly',
+                           file.time = 'annual',
                            shp.file = here::here('data','EPU_NOESTUARIES.shp'),
                            var.name = 'BottomS',
                            agg.time ='months',

@@ -43,7 +43,11 @@ make_2d_summary_ts = function(data.in,file.time,output.files,shp.file,area.names
         
       }else if(class(data.in[[i]])[1] == 'SpatRaster'){
         
-        data = data.in[[i]]
+        if(class(data.in) == 'list'){
+          data = data.in[[i]]  
+        }else{
+          data = data.in
+        }
         
       }else{
         stop('data.in needs to be either file names or spatRasters')
@@ -60,7 +64,7 @@ make_2d_summary_ts = function(data.in,file.time,output.files,shp.file,area.names
       }else if(class(data.in[[i]])[1] == 'SpatRaster'){
         
         data = lapply(data.in,function(x) terra::rast(x))
-        file.date = as.Date(sapply(data,function(x) terra::time(x)) / 86400,origin = '1970-01-01')
+        file.date = as.Date(sapply(data,function(x) terra::time(x)))
       }else{
         stop('data.in needs to be either file names or spatRasters')
       } 

@@ -10,6 +10,8 @@
 #' @param coordinates dataframe of lat, lon, and date to be extracted from daily data
 #' @param search.radius numeric. The number of cell "rings" around the closest match to aggregate over. 0 = closest cell, 1 = 3x3 cells around closest, etc
 #' @param statistics character vector. The statistics to be used for the gridded data. Options are 'mean', 'median', 'min', 'max', 'sd', 'var', 'sum'
+#' @param var.name string. The name of the variable being extracted, used for output file naming
+#' @param write.out logical. If TRUE, writes the output to a csv file, if FALSE returns the output as a dataframe
 #' 
 #' @return a csv with appended values from coordinates input
 #' 
@@ -27,7 +29,7 @@
 # var.name = 'theao'
 
 
-extract_daily_coord = function(input.dir, input.prefix, output.dir, output.prefix, coordinates){
+extract_daily_coord = function(input.dir, input.prefix,input.type, output.dir, output.prefix, coordinates, search.radius = 0,var.name, statistics, write.out){
   
   #List input files
   input.files.short = list.files(input.dir, pattern = paste0(input.prefix, '.*\\.nc'), full.names = F)
@@ -61,7 +63,7 @@ extract_daily_coord = function(input.dir, input.prefix, output.dir, output.prefi
   
   if(input.type == 'daily'){
     #match dates in input.files to coodinates
-    coord.dates = sort(unique(as.Date(output.df$date)))
+    # coord.dates = sort(unique(as.Date(output.df$date)))
     input.date.match = input.file.date[which(input.file.date %in% coordinates$date)]
     
     output.ls = list()
@@ -75,7 +77,7 @@ extract_daily_coord = function(input.dir, input.prefix, output.dir, output.prefi
       this.file = paste0(input.dir,input.files.short[which(input.file.date == this.date)])
       
       #Read in netCDF
-      this.data = terra::rast(this.file,subds = 'thetao')
+      this.data = terra::rast(this.file,subds = var.name)
       
       #which output.df match this.date
       which.coord.date = which(as.character(coordinates$date) == this.date)
@@ -179,7 +181,7 @@ extract_daily_coord = function(input.dir, input.prefix, output.dir, output.prefi
       this.file = paste0(input.dir,input.files.short[which(input.file.year == this.year)])
       
       #Read in netCDF
-      this.data = terra::rast(this.file,subds = 'thetao')
+      this.data = terra::rast(this.file,subds = var.name)
       this.data.time = as.character(terra::time(this.data))
       
       #Match this dates from this.year to this.data
@@ -196,7 +198,7 @@ extract_daily_coord = function(input.dir, input.prefix, output.dir, output.prefi
           dplyr::select(lon,lat) %>%
           as.matrix()
         
-        this.date.rast = subset(this.data,this.date)
+        this.date.rast = terra::subset(this.data,this.date)
         
         #Extract from raster
         this.coords.vals = terra::extract(this.date.rast,this.coords,cells = T)
@@ -286,8 +288,8 @@ extract_daily_coord = function(input.dir, input.prefix, output.dir, output.prefi
     stop('Input type not recognized. Please use daily or annual.')
   }
   
-  output.df = bind_rows(output.ls) %>%
-    filter(!is.na(value))
+  output.df = dplyr::bind_rows(output.ls)
+    # filter(!is.na(value))
   
   if(write.out){
     write.csv(output.df,paste0(output.dir,output.prefix,'_',var.name,'.csv'),row.names =F)
