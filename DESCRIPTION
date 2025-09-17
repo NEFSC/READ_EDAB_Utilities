@@ -19,4 +19,5 @@ Suggests:
 VignetteBuilder: knitr
 Imports: 
     dplyr,
-    terra
+    terra,
+    magrittr
