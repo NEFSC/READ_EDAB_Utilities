@@ -1,0 +1,310 @@
+---
+title: "2D Timeseries"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{2D Timeseries}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+Define parameters for cropping and subsetting
+```{r setup}
+library(here)
+library(EDABUtilities)
+
+epu.shp =system.file('data','EPU_NOESTUARIES.shp',package = 'EDABUtilities')
+var.name = 'BottomS'
+min.S = 30
+max.S = 34
+
+```
+
+Crop the data based on the lat/lon bounds of epu.shp
+```{r}
+
+data.crop = crop_nc_2d(
+  data.in = c(system.file('data','GLORYS_daily_BottomSalinity_2019.nc',package = 'EDABUtilities'),
+                  system.file('data','GLORYS_daily_BottomSalinity_2020.nc',package = 'EDABUtilities')),
+  shp.file = epu.shp,
+  var.name = var.name,
+  write.out = F,
+  area.names =NA
+)
+
+terra::plot(data.crop[[2]])
+```
+Calculate the number of days above a reference salinity
+```{r}
+data.nday =make_2d_deg_day_ts(
+  data.in = data.crop,
+  shp.file = epu.shp,
+  area.names =  c('MAB','GB'),
+  var.name = 'BottomS',
+  statistic = 'nd',
+  ref.value = 33,
+  type = 'above',
+  write.out = F)
+
+data.nday.all = dplyr::bind_rows(data.nday)
+ggplot2::ggplot(data.nday.all,ggplot2::aes(x = ls.id, y = value, fill = area))+
+  ggplot2::geom_bar(stat = 'identity', position = 'dodge')
+  
+```
+
+Filter values within min.S to max.S range and remove values outside of the epu.shp regions
+```{R}
+
+data.mask = mask_nc_2d(
+  data.in = data.crop,
+  shp.file = epu.shp,
+  min.value = min.S,
+  max.value = max.S,
+  binary = F,
+  area.names = NA
+)
+
+terra::plot(data.mask[[1]])
+```
+
+Convert data.mask to data.frame aggregated by month and grouped by the regions MAB & GB
+
+```{R}
+data.ts = make_2d_summary_ts(data.in = data.mask,
+                           shp.file = epu.shp,
+                           var.name = var.name,
+                           agg.time ='months',
+                           statistic = 'mean',
+                           area.names = c('MAB','GB'),
+                           write.out = F)
+
+ggplot2::ggplot(data.ts[[1]],ggplot2::aes(x = time, y= value))+
+  ggplot2::geom_line()+
+  ggplot2::facet_wrap(~area)
+
+```
+
+Test creating the same function without a for loop
+```{r}
+make_2d_summary_ts2 = function(data.in,
+                              output.files,
+                              shp.file,
+                              area.names,
+                              var.name,
+                              agg.time,
+                              tz = NA,
+                              statistic,
+                              touches =TRUE,
+                              write.out = FALSE){
+  
+  if(!is.na(shp.file)){
+    shp.vect = terra::vect(shp.file)
+  }
+  
+   if(is.character(data.in)){
+      
+      datab = terra::rast(data.in)
+      
+    }else if(class(data.in[[1]])[1] == 'SpatRaster'){
+      
+      datab = data.in
+      
+    }else{
+      stop('data.in needs to be either file names or spatRasters')
+    } 
+  
+  out.ls = list()
+  for(i in 1:length(datab)){
+    
+   data <- datab[i]
+    
+    data.time = as.Date(terra::time(data))
+    if(!is.na(tz)){
+      data.time = as.Date(as.POSIXct(data.time,tz = tz),tz = tz)
+      terra::time(data) = data.time
+    }
+    
+    if(agg.time == 'season'){
+      month.season = data.frame(month=1:12,season =rep(1:4,each =3))
+      data.month = as.numeric(format(data.time,format = "%m"))
+      data.season = month.season$season[data.month]
+      season.names = 1:4
+    }
+    
+    
+    if(!is.na(shp.file)){
+      
+      shp.str = as.data.frame(shp.vect)
+      which.att = which(apply(shp.str,2,function(x) all(area.names %in% x)))
+      which.area =  match(area.names,shp.str[,which.att])
+      
+      all_area <- purrr::map2(.x = which.area, .y = area.names,
+                             .f = function(.x, .y, 
+                                            data2 = data,
+                                           shp.vect2 = shp.vect,
+                                           touches2 = touches,
+                                           agg.time2 = agg.time,
+                                           statistic2 = statistic,
+                                           season.names,
+                                           var.name = "test",
+                                           data.in = datab,
+                                           k = i) {
+                                 area.data = terra::mask(data2,shp.vect2[.x,], 
+                                                         touches = touches2)
+                                
+                                  area.agg = terra::tapp(area.data,
+                                                        fun = statistic2,
+                                                        index = ifelse(agg.time2 == "season", 
+                                                                       data.season, 
+                                                                       agg.time2))
+                                
+                                  time.out = ifelse(agg.time2 == "season", 
+                                                   season.names, 
+                                                   terra::time(area.agg))
+                                 
+                                 area.stat = terra::global(area.agg,statistic2,na.rm=TRUE)
+        
+                                 data.frame(time = time.out,
+                                            agg.time = agg.time,
+                                            ls.id = ifelse(is.character(data.in),data.in[k],k),
+                                            var.name = var.name,
+                                            statistic = statistic2,
+                                            area = .y,
+                                            value =area.stat[,1])
+                             })
+      data.stat.df = dplyr::bind_rows(all_area)
+
+    }else{
+
+      data.stat = terra::global(terra::tapp(data, 
+                                           fun = statistic,
+                                           index = ifelse(agg.time == "season",
+                                                          data.season, 
+                                                          agg.time)),
+                                statistic,
+                                na.rm=TRUE)
+      
+      data.stat.df = data.frame(time = ifelse(agg.time == "season", 
+                                              season.names, 
+                                              terra::time(data.agg)),
+                                agg.time =agg.time,
+                                ls.id = ifelse(is.character(data.in),data.in[i],i),
+                                var.name = var.name,
+                                statistic = statistic,
+                                area = NA,
+                                value =data.stat[,1])
+    }
+    
+    if(write.out){
+      saveRDS(data.stat.df, output.files[i])
+    }else{
+      out.ls[[i]] = data.stat.df
+    }
+
+  }
+  
+  if(write.out ==F){
+    return(out.ls)  
+  }
+  
+}
+
+```
+
+Microbenchmark
+```{r}
+dat <- microbenchmark::microbenchmark(
+  make_2d_summary_ts(data.in = data.mask,
+                           shp.file = epu.shp,
+                           var.name = var.name,
+                           agg.time ='months',
+                           statistic = 'mean',
+                           area.names = c('MAB','GB'),
+                           write.out = F),
+  make_2d_summary_ts2(data.in = data.mask,
+                           shp.file = epu.shp,
+                           var.name = var.name,
+                           agg.time ='months',
+                           statistic = 'mean',
+                           area.names = c('MAB','GB'),
+                           write.out = F),
+  times = 20
+)
+
+dat
+```
+
+
+```{r}
+lil_fxn <- function(data2 = data,
+                    shp.vect2 = terra::vect(epu.shp),
+                    # agg.time2 = agg.time,
+                    statistic2 = "mean",
+                    # season.names,
+                    var.name = "test"#,
+                    # data.in = datab,
+                    # k = i
+                    ) {
+                                 area.data = terra::mask(data2,
+                                                         shp.vect2, 
+                                                         touches = TRUE)
+                                
+                                  area.agg = terra::tapp(area.data,
+                                                        fun = statistic2,
+                                                        index = "months")
+                                
+                                  time.out = terra::time(area.agg)
+                                 
+                                 area.stat = terra::global(area.agg,
+                                                           statistic2,
+                                                           na.rm=TRUE)
+        
+                                 out <- data.frame(time = time.out,
+                                            agg.time = "months",
+                                            # ls.id = ifelse(is.character(data.in),data.in[k],k),
+                                            var.name = var.name,
+                                            statistic = statistic2,
+                                            # area = .y,
+                                            value =area.stat[,1]) 
+                                 
+                                 return(out)
+}
+
+
+
+tst <- lil_fxn(data2 = data.mask[[1]], shp.vect2 = terra::vect(epu.shp)[1,])
+
+test_dat <- rep(data.mask, 10)
+shape <- terra::vect(epu.shp)[c(1,4),]
+
+output <- microbenchmark::microbenchmark(
+  {out <- list()
+  for (i in 1:length(test_dat)){
+    out[[i]] <- lil_fxn(data2 = test_dat[[i]], shp.vect2 = terra::vect(epu.shp)[1,])
+    }
+  data.stat.df = dplyr::bind_rows(out)
+  },
+  purrr::map(test_dat, lil_fxn),
+  times = 10)
+
+output <- microbenchmark::microbenchmark(
+  {out <- list()
+  for (i in 1:length(test_dat)){
+    for (j in 1:length(shape)) {
+      out <- list(out, 
+                  lil_fxn(data2 = test_dat[[i]], shp.vect2 = terra::vect(epu.shp)[j,]))
+    }}
+    out
+    },
+  purrr::map2(test_dat, shape, lil_fxn(data2 = .x, shp.vect2 = .y)),
+  times = 10)
+
+
+output
+```
