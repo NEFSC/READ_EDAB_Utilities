@@ -13,6 +13,7 @@
 #' @param tz string. Time zone to convert. No correction if NA
 #' @param touches logical. If TRUE, all cells touched by lines or polygons will be masked, not just those on the line render path, or whose center point is within the polygon
 #' @param write.out logical. If TRUE, will write a netCDF file with output.files. If FALSE will return a list of spatRasters
+#' @param debug logical. If TRUE prints steps
 #'
 #' @return a dataframe output variable summarized by timestep for each area.names
 #' 
@@ -21,7 +22,7 @@
 #' @export
 #' 
 
-make_2d_summary_ts = function(data.in, file.time, output.files, shp.file, area.names, var.name, agg.time, tz = NA, statistics, touches = TRUE, write.out = FALSE){
+make_2d_summary_ts = function(data.in, file.time, output.files, shp.file, area.names, var.name, agg.time, tz = NA,statistics, touches = TRUE, write.out = FALSE, debug = F){
   
   if(inherits(shp.file, c('SpatVector','SpatRaster'))){
     shp.vect = shp.file
@@ -52,6 +53,10 @@ make_2d_summary_ts = function(data.in, file.time, output.files, shp.file, area.n
   }
   
   for(i in 1:length(data.in)){
+    
+    if(debug){
+      message(paste0('Starting file: ', i, ' of ', length(data.in)))
+    }
     
     # Establish current ID for reporting
     current_ls_id = ifelse(is.character(data.in), data.in[i], i)
