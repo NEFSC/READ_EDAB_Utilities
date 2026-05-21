@@ -1,299 +1,159 @@
 #' Matches daily coordinates to gridded data
 #'
-#' descriptions
+#' This function extracts values from a daily or multi-layer gridded dataset at specific coordinate and time locations. It standardizes inputs and optionally computes focal statistics within a specified search radius around the target coordinates.
 #'
-#' @param input.dir String. The full input directory for daily input files
-#' @param input.prefix string. The prefix of the input files
-#' @param input.type string. The type of input data (e.g., 'daily', 'annual'), assumes data within at daily scale
-#' @param output.dir string. The full output directory for the gridded data
-#' @param output.prefix string. The prefix of the output files
-#' @param coordinates dataframe of lat, lon, and date to be extracted from daily data
-#' @param search.radius numeric. The number of cell "rings" around the closest match to aggregate over. 0 = closest cell, 1 = 3x3 cells around closest, etc
-#' @param statistics character vector. The statistics to be used for the gridded data. Options are 'mean', 'median', 'min', 'max', 'sd', 'var', 'sum'
-#' @param var.name string. The name of the variable being extracted, used for output file naming
-#' @param write.out logical. If TRUE, writes the output to a csv file, if FALSE returns the output as a dataframe
+#' @param data.in character vector, list, or SpatRaster. Single file path, vector of file paths, single SpatRaster, or list of SpatRasters.
+#' @param coord.df data.frame. A dataframe containing 'lat', 'lon', and 'date' columns to be extracted from the gridded data.
+#' @param var.name string. The name of the variable being extracted.
+#' @param search.radius numeric. The number of cell "rings" around the closest match to aggregate over. 0 = closest cell, 1 = 3x3 cells around closest, etc.
+#' @param statistics character vector. The statistics to be used for the gridded data. Options are 'mean', 'median', 'min', 'max', 'sd', 'var', 'sum'.
+#' @param write.out logical. If TRUE, writes the output to a csv file. If FALSE returns the output as a dataframe. Default is FALSE.
+#' @param output.file string. Full output file path (including .csv extension). Required if write.out is TRUE. Default is NULL.
 #' 
-#' @return a csv with appended values from coordinates input
+#' @return A dataframe with appended values from the gridded data matching the coordinates input, or writes a CSV if write.out is TRUE.
 #' 
 #' @export
-#' 
-
-# input.dir = 'C:/Users/Joseph.Caracappa/Documents/Data/GLORYS/GLORYS_daily/'
-# input.dir = 'C:/Data/GLORYS/Daily_Bottom_Temp/2022/'
-# # input.prefix = 'GLORYS_daily_BottomTemp'
-# input.prefix = 'GLORYS_REANALYSIS_'
-# input.type = 'daily'
-# output.dir = 'C:/Users/joseph.caracappa/Documents/Data/GLORYS/bts_stations/'
-# output.prefix = 'bottom_trawl_survey_stations_GLORYS_2022_'
-# coordinates = readRDS(here::here('data-raw','station_locations.rds')) %>% rename(lat = 'LAT',lon = 'LON',date = 'EST_TOWDATE')
-# var.name = 'theao'
-
-
-extract_daily_coord = function(input.dir, input.prefix,input.type, output.dir, output.prefix, coordinates, search.radius = 0,var.name, statistics, write.out){
+extract_daily_coord <- function(data.in, coord.df, var.name, search.radius = 0, statistics = "mean", write.out = FALSE, output.file = NULL) {
   
-  #List input files
-  input.files.short = list.files(input.dir, pattern = paste0(input.prefix, '.*\\.nc'), full.names = F)
-  if(input.type == 'daily'){
-    input.file.date = as.Date(gsub( '.*_([0-9]{4})-([0-9]{2})-([0-9]{2}).*', '\\1-\\2-\\3', input.files.short))  
-    input.file.year = format(input.file.date,format = '%Y')
-  }else{
-    
-    #get 4digit year from input.files.short
-    input.file.year = gsub( '.*_([0-9]{4}).*', '\\1', input.files.short)
-  }
-  
-  
-  #Check if output file exists
-  output.file = paste0(output.dir, output.prefix, coordinates$lat[1], '_', coordinates$lon[1], '.csv')
-  
-  if(file.exists(output.file)){
-    message(paste0('Output file already exists: ', output.file))
-    return(NULL)
-  }
-  
-  #Create output directory if it doesn't exist
-  if(!dir.exists(output.dir)){
-    dir.create(output.dir, recursive = TRUE)
-  }
-  
-  #Setup output.df
-  coordinates$date = as.Date(coordinates$date)
-  
-  output.ls = list()
-  
-  if(input.type == 'daily'){
-    #match dates in input.files to coodinates
-    # coord.dates = sort(unique(as.Date(output.df$date)))
-    input.date.match = input.file.date[which(input.file.date %in% coordinates$date)]
-    
-    output.ls = list()
-    
-    for(i in 1:length(input.date.match)){
-      
-      #Get the date for this file
-      this.date = input.date.match[i]
-      
-      #Get the file name for this date
-      this.file = paste0(input.dir,input.files.short[which(input.file.date == this.date)])
-      
-      #Read in netCDF
-      this.data = terra::rast(this.file,subds = var.name)
-      
-      #which output.df match this.date
-      which.coord.date = which(as.character(coordinates$date) == this.date)
-      this.coords = coordinates[which.coord.date,] %>%
-        dplyr::select(lon,lat)%>%
-        as.matrix()
-      
-      #Extract from raster
-      this.coords.vals = terra::extract(this.data,this.coords,cells = T)
-      val.product.coords =  terra::xyFromCell(this.data,this.coords.vals$cell)
-      
-      out.match = data.frame(lon.obs = this.coords[,1],
-                             lat.obs = this.coords[,2],
-                             lon.product = val.product.coords[,1],
-                             lat.product = val.product.coords[,2],
-                             center.value = this.coords.vals[,2],
-                             date =this.date,
-                             var.name = var.name,
-                             search.radius = search.radius,
-                             center.cell = this.coords.vals$cell,
-                             stringsAsFactors = F)
-      output.ls[[i]] = out.match
-      
-      
-      
-      ##should return a list of dataframes##
-      if(search.radius > 0){
-        
-        #extract a in a ring around a coordinate match
-        val.product.rc = terra::rowColFromCell(this.data,this.coords.vals$cell) %>%
-          as.data.frame() %>%
-          dplyr::rename(x.center = 'V1',y.center = 'V2')%>%
-          dplyr::mutate(center.cell = this.coords.vals$cell,
-                        x.min = x.center - search.radius,
-                        x.max = x.center + search.radius,
-                        y.min = y.center - search.radius,
-                        y.max = y.center + search.radius)
-        
-        output.stat.ls = list()
-        for(k in 1:nrow(val.product.rc)){
-          #get the row and column for this coordinate
-          this.row = val.product.rc$x.center[k]
-          this.col = val.product.rc$y.center[k]
-          
-          #get the rows and columns for the box
-          this.row.range = (this.row - search.radius):(this.row + search.radius)
-          this.col.range = (this.col - search.radius):(this.col + search.radius)
-          
-          #get the cells in the box
-          this.box.cells = terra::cellFromRowCol(this.data,rep(this.row.range, length(this.col.range)),rep(this.col.range,each = length(this.col.range)))
-          
-          #extract from raster
-          this.box.vals = terra::extract(this.date.rast,this.box.cells)[,1]
-          
-          #get the summary statistics for this box
-          output.stat.ls[[k]] = lapply(statistics, function(stat){
-            if(stat == 'mean'){
-              this.box.stat = mean(this.box.vals, na.rm = T)
-            }else if(stat == 'median'){
-              this.box.stat = median(this.box.vals, na.rm = T)
-            }else if(stat == 'min'){
-              this.box.stat = min(this.box.vals, na.rm = T)
-            }else if(stat == 'max'){
-              this.box.stat = max(this.box.vals, na.rm = T)
-            }else if(stat == 'sd'){
-              this.box.stat = sd(this.box.vals, na.rm = T)
-            }else if(stat == 'var'){
-              this.box.stat = var(this.box.vals, na.rm = T)
-            }else if(stat == 'sum'){
-              this.box.stat = sum(this.box.vals, na.rm = T)
-            }
-            stat.out = val.product.rc[k,] %>%
-              dplyr::mutate(statistic = stat,value = this.box.stat)
-            return(stat.out)
-          })%>%
-            dplyr::bind_rows()
-          
-        }
-        output.stat.df = dplyr::bind_rows(output.stat.ls) %>%
-          left_join(out.match)
-        
-        output.ls[[i]] = output.stat.df
-      }
-      
+  # Data Input Standardization
+  if (inherits(data.in, "SpatRaster")) {
+    data.ls <- list(data.in)
+  } else if (is.character(data.in)) {
+    data.ls <- as.list(data.in)
+    if (!all(grepl('.nc', unlist(data.ls)))) {
+      stop("All input files must be netCDF (.nc) files.")
     }
-  }else if(input.type == 'annual'){
+  } else if (is.list(data.in) && all(sapply(data.in, inherits, "SpatRaster"))) {
+    data.ls <- data.in
+  } else {
+    stop("data.in must be a file path, a vector of file paths, a single SpatRaster, or a list of SpatRasters.")
+  }
+  
+  # Ensure standard coordinate data structure
+  if (!all(c("lat", "lon", "date") %in% names(coord.df))) {
+    stop("coord.df must contain 'lat', 'lon', and 'date' columns.")
+  }
+  coord.df$date <- as.Date(coord.df$date)
+  
+  out.ls <- list()
+  
+  for (i in seq_along(data.ls)) {
     
-    coord.years = format(coordinates$date,format = '%Y')
-    
-    #match input.file years to coord.years
-    input.file.year.match = input.file.year[which(input.file.year %in% coord.years)]
-    
-    ind = 1
-    
-    for(i in 1:length(input.file.year.match)){
-      
-      #Get the year for this file
-      this.year = input.file.year.match[i]
-      
-      #Get the file name for this year
-      this.file = paste0(input.dir,input.files.short[which(input.file.year == this.year)])
-      
-      #Read in netCDF
-      this.data = terra::rast(this.file,subds = var.name)
-      this.data.time = as.character(terra::time(this.data))
-      
-      #Match this dates from this.year to this.data
-      coord.year.dates = sort(unique(as.Date(coordinates$date[which(format(coordinates$date,format = '%Y') == this.year)])))
-      coord.year.dates = coord.year.dates[which(coord.year.dates %in% this.data.time)]
-      
-      for(j in 1:length(coord.year.dates)){
-        
-        this.date = which(this.data.time == coord.year.dates[j])
-        which.coord.date = which(as.character(coordinates$date) == coord.year.dates[j])
-        
-        #get coordinates for this date
-        this.coords = dplyr::filter(coordinates, date == coord.year.dates[j]) %>%
-          dplyr::select(lon,lat) %>%
-          as.matrix()
-        
-        this.date.rast = terra::subset(this.data,this.date)
-        
-        #Extract from raster
-        this.coords.vals = terra::extract(this.date.rast,this.coords,cells = T)
-        val.product.coords =  terra::xyFromCell(this.data,this.coords.vals$cell)
-        
-        ## change to index
-        out.match = data.frame(lon.obs = this.coords[,1],
-                               lat.obs = this.coords[,2],
-                               lon.product = val.product.coords[,1],
-                               lat.product = val.product.coords[,2],
-                               center.value = this.coords.vals[,2],
-                               date = as.Date(coord.year.dates[j]),
-                               var.name = var.name,
-                               search.radius = search.radius,
-                               center.cell = this.coords.vals$cell,
-                               stringsAsFactors = F)
-        output.ls[[ind]] = out.match
-        
-        
-        #Do search radius
-        #extract a in a ring around a coordinate match
-        val.product.rc = terra::rowColFromCell(this.data,this.coords.vals$cell) %>%
-          as.data.frame() %>%
-          dplyr::rename(x.center = 'V1',y.center = 'V2')%>%
-          dplyr::mutate(center.cell = this.coords.vals$cell,
-                        x.min = x.center - search.radius,
-                        x.max = x.center + search.radius,
-                        y.min = y.center - search.radius,
-                        y.max = y.center + search.radius)
-        
-        #loop through val.product.rc and extract box defined by x1,x2,y1,y2
-        
-        
-        ##should return a list of dataframes##
-        if(search.radius > 0){
-          output.stat.ls = list()
-          for(k in 1:nrow(val.product.rc)){
-            #get the row and column for this coordinate
-            this.row = val.product.rc$x.center[k]
-            this.col = val.product.rc$y.center[k]
-            
-            #get the rows and columns for the box
-            this.row.range = (this.row - search.radius):(this.row + search.radius)
-            this.col.range = (this.col - search.radius):(this.col + search.radius)
-            
-            #get the cells in the box
-            this.box.cells = terra::cellFromRowCol(this.data,rep(this.row.range, length(this.col.range)),rep(this.col.range,each = length(this.col.range)))
-            
-            #extract from raster
-            this.box.vals = terra::extract(this.date.rast,this.box.cells)[,1]
-            
-            #get the summary statistics for this box
-            output.stat.ls[[k]] = lapply(statistics, function(stat){
-              if(stat == 'mean'){
-                this.box.stat = mean(this.box.vals, na.rm = T)
-              }else if(stat == 'median'){
-                this.box.stat = median(this.box.vals, na.rm = T)
-              }else if(stat == 'min'){
-                this.box.stat = min(this.box.vals, na.rm = T)
-              }else if(stat == 'max'){
-                this.box.stat = max(this.box.vals, na.rm = T)
-              }else if(stat == 'sd'){
-                this.box.stat = sd(this.box.vals, na.rm = T)
-              }else if(stat == 'var'){
-                this.box.stat = var(this.box.vals, na.rm = T)
-              }else if(stat == 'sum'){
-                this.box.stat = sum(this.box.vals, na.rm = T)
-              }
-              stat.out = val.product.rc[k,] %>%
-                dplyr::mutate(statistic = stat,value = this.box.stat)
-              return(stat.out)
-            })%>%
-              dplyr::bind_rows()
-            
-          }
-          output.stat.df = dplyr::bind_rows(output.stat.ls) %>%
-            left_join(out.match)
-          
-          output.ls[[ind]] = output.stat.df
-        }
-        
-        ind = ind +1
-      }
+    if (is.character(data.ls[[i]])) {
+      if (!file.exists(data.ls[[i]])) stop(sprintf("File does not exist: %s", data.ls[[i]]))
+      this.data <- terra::rast(data.ls[[i]], subds = var.name)
+    } else {
+      this.data <- data.ls[[i]]
     }
     
-  }else{
-    stop('Input type not recognized. Please use daily or annual.')
+    # Time handling and fallback
+    this.data.time <- terra::time(this.data)
+    if (all(is.na(this.data.time)) || is.null(this.data.time)) {
+      if (is.character(data.ls[[i]])) {
+        file.date <- suppressWarnings(as.Date(gsub(".*(\\d{4})-(\\d{2})-(\\d{2}).*", "\\1-\\2-\\3", basename(data.ls[[i]]))))
+        if (is.na(file.date)) stop(sprintf("Cannot determine time for %s", data.ls[[i]]))
+        this.data.time <- rep(file.date, terra::nlyr(this.data))
+      } else {
+        stop("Cannot determine time for SpatRaster input.")
+      }
+    }
+    this.data.time <- as.Date(this.data.time)
+    
+    # Pre-filter spatial intersections to avoid costly empty extractions
+    valid_coords <- coord.df[coord.df$date %in% this.data.time, ]
+    if (nrow(valid_coords) == 0) next
+    
+    pts <- as.matrix(valid_coords[, c("lon", "lat")])
+    central_cells <- terra::cellFromXY(this.data, pts)
+    
+    # Edge case: Keep only points that successfully mapped to the raster grid
+    valid_idx <- !is.na(central_cells)
+    if (!any(valid_idx)) next
+    
+    valid_coords <- valid_coords[valid_idx, ]
+    central_cells <- central_cells[valid_idx]
+    pts <- pts[valid_idx, , drop = FALSE]
+    
+    val.product.coords <- terra::xyFromCell(this.data, central_cells)
+    
+    # Vectorized subsetting of layer targets instead of looping through dates
+    layer_idx <- match(valid_coords$date, this.data.time)
+    
+    out.match <- data.frame(
+      lon.obs = pts[, 1],
+      lat.obs = pts[, 2],
+      lon.product = val.product.coords[, 1],
+      lat.product = val.product.coords[, 2],
+      date = valid_coords$date,
+      var.name = var.name,
+      search.radius = search.radius,
+      center.cell = central_cells,
+      stringsAsFactors = FALSE
+    )
+    
+    # Extract values directly from Terra matrix representation for massive speedups
+    all_center_vals <- this.data[central_cells]
+    out.match$center.value <- all_center_vals[cbind(seq_along(central_cells), layer_idx)]
+    
+    if (search.radius == 0) {
+      out.ls[[length(out.ls) + 1]] <- out.match
+    } else {
+      # Highly optimized search radius geometry generation
+      rc <- terra::rowColFromCell(this.data, central_cells)
+      max_row <- terra::nrow(this.data)
+      max_col <- terra::ncol(this.data)
+      
+      stat_results <- lapply(seq_along(central_cells), function(pt_idx) {
+        r <- rc[pt_idx, 1]
+        c <- rc[pt_idx, 2]
+        lyr <- layer_idx[pt_idx]
+        
+        rows <- max(1, r - search.radius):min(max_row, r + search.radius)
+        cols <- max(1, c - search.radius):min(max_col, c + search.radius)
+        
+        # Calculate cell bounding box limits natively
+        grid <- expand.grid(row = rows, col = cols)
+        cells <- terra::cellFromRowCol(this.data, grid$row, grid$col)
+        
+        box_vals <- this.data[[lyr]][cells]
+        if (is.data.frame(box_vals)) box_vals <- box_vals[[1]]
+        
+        res <- lapply(statistics, function(stat) {
+          val_stat <- switch(stat,
+                             "mean" = mean(box_vals, na.rm = TRUE),
+                             "median" = median(box_vals, na.rm = TRUE),
+                             "min" = min(box_vals, na.rm = TRUE),
+                             "max" = max(box_vals, na.rm = TRUE),
+                             "sd" = sd(box_vals, na.rm = TRUE),
+                             "var" = var(box_vals, na.rm = TRUE),
+                             "sum" = sum(box_vals, na.rm = TRUE),
+                             NA
+          )
+          data.frame(pt_id = pt_idx, statistic = stat, value = val_stat, stringsAsFactors = FALSE)
+        })
+        do.call(rbind, res)
+      })
+      
+      stat_df <- do.call(rbind, stat_results)
+      
+      out.match$pt_id <- seq_len(nrow(out.match))
+      merged_df <- merge(out.match, stat_df, by = "pt_id")
+      merged_df$pt_id <- NULL 
+      
+      out.ls[[length(out.ls) + 1]] <- merged_df
+    }
   }
   
-  output.df = dplyr::bind_rows(output.ls)
-    # filter(!is.na(value))
+  if (length(out.ls) == 0) return(data.frame())
   
-  if(write.out){
-    write.csv(output.df,paste0(output.dir,output.prefix,'_',var.name,'.csv'),row.names =F)
-  }else{
+  output.df <- dplyr::bind_rows(out.ls)
+  
+  if (write.out) {
+    if (is.null(output.file)) stop("output.file must be provided when write.out is TRUE.")
+    out_dir <- dirname(output.file)
+    if (!dir.exists(out_dir)) dir.create(out_dir, recursive = TRUE)
+    write.csv(output.df, output.file, row.names = FALSE)
+  } else {
     return(output.df)
   }
 }
