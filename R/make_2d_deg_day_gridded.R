@@ -62,7 +62,7 @@ make_2d_deg_day_gridded_nc <- function(data.in, var.name, statistic, ref.value, 
       data <- data.ls[[i]]
     }
     
-    data <- EDABUtilities::convert_longitude(data)
+    data <- EDABUtilities::convert_2d_longitude_gridded(data)[[1]]
     
     # Core statistical processing (Notice: Shapefile masking is deferred until after this reduces the stack!)
     if (type == 'raw') {

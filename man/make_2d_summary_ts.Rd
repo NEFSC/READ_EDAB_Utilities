@@ -2,46 +2,48 @@
 % Please edit documentation in R/make_2d_summary_ts.R
 \name{make_2d_summary_ts}
 \alias{make_2d_summary_ts}
-\title{Provides summary statistics of 2d gridded data as time series by area}
+\title{Calculates summary statistics of 2D gridded data as a time series by area}
 \usage{
 make_2d_summary_ts(
   data.in,
-  file.time,
-  output.files,
-  shp.file,
-  area.names,
   var.name,
-  agg.time,
-  tz = NA,
   statistics,
-  touches = T,
-  write.out = F
+  agg.time,
+  file.time = "annual",
+  shp.file = NA,
+  area.names = NULL,
+  tz = NA,
+  touches = TRUE,
+  output.files = NULL,
+  write.out = FALSE
 )
 }
 \arguments{
-\item{data.in}{Either a character vector of full input file names for a list of spatRasters}
+\item{data.in}{character vector, list, or SpatRaster. Single file path, vector of file paths, single SpatRaster, or list of SpatRasters representing the spatial data.}
 
-\item{file.time}{string. What time scale the input files are on ('daily','monthly','annual')? Assumes all monthly or annual files are on a daily timestep}
+\item{var.name}{character. Variable name you wish to extract.}
 
-\item{output.files}{character vector of full output file names corresponding to each input file}
+\item{statistics}{character vector. Which statistic(s) to calculate (e.g., c("mean", "max")).}
 
-\item{shp.file}{string. Shape file you wish to crop each input file to}
+\item{agg.time}{character. Time scale to calculate aggregation over (e.g., "days", "months", "season", "years").}
 
-\item{var.name}{string. Variable name you wish to extract}
+\item{file.time}{character. What time scale the input files are on ('daily', 'monthly', 'annual'). Default is 'annual'.}
 
-\item{agg.time}{character. Time scale to calculate climatology over (days,doy, months,season, or  years)}
+\item{shp.file}{character, SpatVector, SpatRaster, or NA. Shapefile or raster to mask the input data to. Default is NA.}
 
-\item{tz}{string. Time zone to convert. No correction if NA}
+\item{area.names}{character vector or NULL. Names of the areas in the shapefile to extract. Default is NULL.}
 
-\item{statistics}{character vector. Which statistic to calculate}
+\item{tz}{character or NA. Time zone to convert. No correction if NA. Default is NA.}
 
-\item{touches}{logical. If TRUE, all cells touched by lines or polygons will be masked, not just those on the line render path, or whose center point is within the polygon}
+\item{touches}{logical. If TRUE, all cells touched by lines or polygons will be masked, not just those on the center point. Default is TRUE.}
 
-\item{write.out}{logical. If TRUE, will write a netCDF file with output.files. If FALSE will return a list of spatRasters}
+\item{output.files}{character vector or NULL. Full output file paths corresponding to each processing group. Default is NULL.}
+
+\item{write.out}{logical. If TRUE, writes RDS files. If FALSE, returns a list of data frames. Default is FALSE.}
 }
 \value{
-a dataframe output variable summarized by timestep for each area.names
+If write.out is TRUE, writes RDS files to disk. If FALSE, returns a list of data frames summarized by timestep for each area.
 }
 \description{
-descriptions
+This function extracts spatial raster data across specified shapefile regions and aggregates it temporally to produce timeseries summary statistics. It processes inputs by grouping them (e.g., aggregating daily layers into annual time series) and outputs either a list of summarized data frames or writes RDS files directly.
 }

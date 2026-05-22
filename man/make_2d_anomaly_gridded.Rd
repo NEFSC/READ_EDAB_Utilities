@@ -2,36 +2,36 @@
 % Please edit documentation in R/make_2d_anomaly_gridded.R
 \name{make_2d_anomaly_gridded}
 \alias{make_2d_anomaly_gridded}
-\title{Provides a gridded climatology based on a reference dates}
+\title{Provides a gridded anomaly based on a reference climatology}
 \usage{
 make_2d_anomaly_gridded(
   data.in,
   climatology,
-  output.files,
-  shp.file,
   var.name,
+  shp.file = NA,
   area.names = NA,
-  write.out = F
+  write.out = FALSE,
+  output.files = NULL
 )
 }
 \arguments{
-\item{data.in}{Either a character vector of full input file names for a list of spatRasters}
+\item{data.in}{character vector, list, or SpatRaster. Single file path, vector of file paths, single SpatRaster, or list of SpatRasters representing the raw data.}
 
-\item{climatology}{Either an input file name or spatRaster for the reference climatology. should be on same resolution as data.in}
+\item{climatology}{string or SpatRaster. The reference climatology to subtract from the input data. Should ideally be on the same resolution as data.in.}
 
-\item{output.files}{character vector of full output file names corresponding to each input file}
+\item{var.name}{string. Variable name you wish to extract and write.}
 
-\item{shp.file}{string. Shape file you wish to crop each input file to}
+\item{shp.file}{string, SpatVector, or SpatRaster. The shapefile or spatial object used to crop/mask the data. Default is NA.}
 
-\item{var.name}{string. Variable name you wish to extract}
+\item{area.names}{character vector. Optional names of specific areas within the shapefile to filter by before masking. Default is NA.}
 
-\item{area.names}{character vector. Names of shape file areas you want to summarise}
+\item{write.out}{logical. If TRUE, writes a netCDF file. If FALSE, returns a list of SpatRasters. Default is FALSE.}
 
-\item{write.out}{logical. If TRUE, will write a netCDF file with output.files. If FALSE will return a list of spatRasters}
+\item{output.files}{character vector. Full output file names corresponding to each input file. Required if write.out is TRUE. Default is NULL.}
 }
 \value{
-netCDF file with same time dimensions as input file
+A list of SpatRasters containing the anomalies if write.out is FALSE, or writes NetCDF files to disk if TRUE.
 }
 \description{
-descriptions
+This function calculates a spatial anomaly by subtracting a reference climatology from a gridded dataset. It standardizes spatial inputs, aligns resolutions, and outputs either a list of SpatRasters to the R environment or writes the results directly to disk as NetCDF files.
 }

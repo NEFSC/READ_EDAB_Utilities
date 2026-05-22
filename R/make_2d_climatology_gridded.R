@@ -63,7 +63,7 @@ make_2d_climatology_gridded <- function(data.in, var.name, agg.time, statistic, 
       data <- data.ls[[i]]
     }
     
-    data <- EDABUtilities::convert_longitude(data)
+    data <- EDABUtilities::convert_2d_longitude_gridded(data)[[1]]
     
     # 1. OPTIMIZATION: Aggregate time BEFORE masking to reduce layer dimensions footprint
     data.time.agg <- terra::tapp(data, index = agg.time, fun = statistic)
@@ -86,7 +86,7 @@ make_2d_climatology_gridded <- function(data.in, var.name, agg.time, statistic, 
   }
   
   # Stacking directly as a single multi-layered raster is often cleaner than sds for calculating app() metrics
-  data.stack <- terra::rast(data.time.agg.ls)
+  data.stack <- terra::sds(data.time.agg.ls)
   data.clim <- terra::app(data.stack, fun = statistic)
   
   if (write.out) {

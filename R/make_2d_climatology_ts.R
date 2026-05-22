@@ -42,9 +42,11 @@ make_2d_climatology_ts <- function(data.in, start.time, stop.time, statistic, ou
   
   # Note: `statistic` is purposefully removed from group_by and mutated directly 
   # to reflect the *new* stat, avoiding carry-over confusion from the summary step.
+  clim_func = match.fun(statistic)
+  
   clim.out <- clim_bound |>
     dplyr::group_by(time, agg.time, var.name, area) |>
-    dplyr::summarise(value = match.fun(statistic)(value, na.rm = TRUE), .groups = "drop") |>
+    dplyr::summarise(value = clim_func(value, na.rm = TRUE), .groups = "drop") |>
     dplyr::mutate(statistic = statistic) 
   
   if (write.out) {

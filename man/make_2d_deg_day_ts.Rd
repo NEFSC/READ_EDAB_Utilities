@@ -2,40 +2,42 @@
 % Please edit documentation in R/make_2d_deg_day_ts.R
 \name{make_2d_deg_day_ts}
 \alias{make_2d_deg_day_ts}
-\title{Provides a data frame of degree-day family statistics}
+\title{Calculates timeseries degree-day family statistics from spatial data}
 \usage{
 make_2d_deg_day_ts(
   data.in,
-  output.files,
-  shp.file,
-  area.names,
   var.name,
   statistic,
   ref.value,
   type,
-  write.out = F
+  shp.file = NA,
+  area.names = NULL,
+  output.files = NULL,
+  write.out = FALSE
 )
 }
 \arguments{
-\item{data.in}{Either a character vector of full input file names for a list of spatrasters}
+\item{data.in}{character vector, list, or SpatRaster. Single file path, vector of file paths, single SpatRaster, or list of SpatRasters representing the spatial data to be processed.}
 
-\item{output.files}{character vector of full output file names corresponding to each input file}
+\item{var.name}{character. Variable name you wish to extract and process.}
 
-\item{shp.file}{string. Shape file you wish to crop each input file to}
+\item{statistic}{character. Which statistic to calculate ('dd' for degree days, 'nd' for number of days, 'nd.con' for max consecutive number of days).}
 
-\item{var.name}{string. Variable name you wish to extract}
+\item{ref.value}{numeric. Reference point value for the threshold.}
 
-\item{statistic}{string. Which statistic to calculate ('dd' for degree days, 'nd' for number of days)}
+\item{type}{character. How to use the reference point ('above', 'below', or 'raw').}
 
-\item{ref.value}{numeric. reference point value for threshold}
+\item{shp.file}{character, SpatVector, SpatRaster, or NA. Shapefile or raster to mask the input data to. Default is NA.}
 
-\item{type}{string. How to use reference point ('above', 'below', or 'raw')}
+\item{area.names}{character vector or NULL. Names of shapefile areas you want to retain. Default is NULL.}
 
-\item{write.out}{logical. If TRUE, will write a netCDF file with output.files. If FALSE will return a list of spatRasters}
+\item{output.files}{character vector or NULL. Full output file paths corresponding to each input file if write.out is TRUE. Default is NULL.}
+
+\item{write.out}{logical. If TRUE, writes RDS files. If FALSE, returns a list of data.frames. Default is FALSE.}
 }
 \value{
-a dataframe output variable summarized by timestep for each area.names
+If write.out is TRUE, writes RDS files to disk. If FALSE, returns a list of data.frames summarized by timestep and area.
 }
 \description{
-descriptions
+This function calculates degree-day family statistics (like number of days or consecutive days above/below a threshold) by first summarizing spatial input data into a daily timeseries, then evaluating the timeseries against a reference value.
 }

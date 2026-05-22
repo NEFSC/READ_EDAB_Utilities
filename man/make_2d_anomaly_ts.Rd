@@ -4,19 +4,25 @@
 \alias{make_2d_anomaly_ts}
 \title{Creates an anomaly timeseries from a climatology}
 \usage{
-make_2d_anomaly_ts(data.in, climatology, output.files, write.out = F)
+make_2d_anomaly_ts(
+  data.in,
+  climatology,
+  write.out = FALSE,
+  output.files = NULL
+)
 }
 \arguments{
-\item{data.in}{a dataframe or list of RDS files containing dataframes}
+\item{data.in}{character vector, list, or data.frame. Single file path, vector of file paths, single data.frame, or list of data.frames representing the raw timeseries data.}
 
-\item{climatology}{a dataframe with the same time dimensions and area.names as data.in to act as a climatological reference}
+\item{climatology}{data.frame. A dataframe with the same time dimensions and area names as data.in to act as a climatological reference.}
 
-\item{output.files}{character vector of full output file names corresponding to each input file}
+\item{write.out}{logical. If TRUE, writes an RDS file. If FALSE, returns a list of data.frames. Default is FALSE.}
 
-\item{write.out}{logical. If TRUE, will write a netCDF file with output.files. If FALSE will return a list of spatRasters}
-
-\item{return}{a dataframe output variable summarized by timestep for each area.names}
+\item{output.files}{character vector. Full output file names corresponding to each input file. Required if write.out is TRUE. Default is NULL.}
+}
+\value{
+A list of anomaly data.frames if write.out is FALSE, or writes RDS files to disk if TRUE.
 }
 \description{
-descriptions
+This function calculates a timeseries anomaly by subtracting a reference climatology from an input timeseries dataset. It standardizes dataframe and RDS file inputs and either returns a list of anomaly dataframes to the R environment or writes them directly to disk.
 }

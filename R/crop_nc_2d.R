@@ -70,7 +70,7 @@ crop_nc_2d <- function(data.in, shp.file, var.name, area.names = NA, write.out =
       data.orig <- data.ls[[i]]
     }
     
-    data.orig <- EDABUtilities::convert_longitude(data.orig)
+    data.orig <- EDABUtilities::convert_2d_longitude_gridded(data.orig)[[1]]
     
     # Edge Case Handling: Numeric Extent intersection check (avoids SpatExtent class mismatch)
     e1 <- as.vector(terra::ext(data.orig))

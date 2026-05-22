@@ -6,36 +6,38 @@
 \usage{
 mask_nc_2d(
   data.in,
-  write.out = F,
-  output.files,
-  shp.file = NA,
   var.name,
   min.value,
   max.value,
-  binary = F,
+  write.out = FALSE,
+  output.files = NULL,
+  shp.file = NA,
+  binary = FALSE,
   area.names = NA
 )
 }
 \arguments{
-\item{data.in}{Either a character vector of full input file names for a list of spatRasters}
+\item{data.in}{character vector, list, or SpatRaster. Single file path, vector of file paths, single SpatRaster, or list of SpatRasters.}
 
-\item{write.out}{logical. If TRUE, will write a netCDF file with output.files. If FALSE will return a list of spatRasters}
+\item{var.name}{character. Variable name you wish to extract and process.}
 
-\item{output.files}{character vector of full output file names corresponding to each input file}
+\item{min.value}{numeric. Minimum value of the variable to retain.}
 
-\item{shp.file}{string. Shape file you wish to crop each input file to}
+\item{max.value}{numeric. Maximum value of the variable to retain.}
 
-\item{var.name}{string. Variable name you wish to extract}
+\item{write.out}{logical. If TRUE, writes a netCDF file. If FALSE, returns a list of SpatRasters. Default is FALSE.}
 
-\item{min.value}{numeric. Minimum value of var.name}
+\item{output.files}{character vector. Full output file names corresponding to each input item. Required if write.out is TRUE.}
 
-\item{max.value}{numeric. maximum value of var.name}
+\item{shp.file}{string, SpatVector, or SpatRaster. Shapefile to crop and mask each input file to. Default is NA.}
 
-\item{binary}{logical. Whether mask should be binary (0 for outside range, 1 for inside range) or the original values}
+\item{binary}{logical. Whether the mask should be binary (1 for inside range, NA for outside) or retain original values. Default is FALSE.}
+
+\item{area.names}{character vector. Specific area names to filter the shapefile by before cropping. Default is NA.}
 }
 \value{
-netCDF file with same time dimensions as input file
+A named list of SpatRasters if write.out is FALSE. Otherwise, writes NetCDF files and returns nothing.
 }
 \description{
-descriptions
+This function filters 2D gridded spatial data by clamping values within a specified minimum and maximum range. It can optionally convert the valid range into a binary mask and crop the data to a specific spatial area prior to masking.
 }

@@ -1,160 +1,136 @@
-#' Provides summary statistics on 2d grid
+#' Calculates summary statistics on a 2D spatial grid
 #'
-#' descriptions
+#' This function aggregates temporal spatial data (like daily rasters) into broader time periods (e.g., months, seasons) and calculates specified summary statistics. It can optionally mask the input to specific shapefile regions before summarization.
 #'
-#' @param data.in Either a character vector of full input file names for a list of spatRasters
-#' @param file.time string. What time scale the input files are on ('daily','monthly','annual')? Assumes all monthly or annual files are on a daily timestep
-#' @param output.files character vector of full output file names corresponding to each input file
-#' @param shp.file  string. Shape file you wish to crop each input file to
-#' @param var.name string. Variable name you wish to extract 
-#' @param agg.time string. Whether to aggregate over. Passed to terra::tapp (e.g. "days", "months", or "years", "season", etc.)
-#' @param tz string. Time zone to convert. No correction if NA
-#' @param statistics character vector. Which statistic to calculate
-#' @param area.names character vector. Names of shape file areas you want to summarise
-#' @param touches logical. If TRUE, all cells touched by lines or polygons will be masked, not just those on the line render path, or whose center point is within the polygon
-#' @param write.out logical. If TRUE, will write a netCDF file with output.files. If FALSE will return a list of spatRasters
+#' @param data.in character vector, list, or SpatRaster. Single file path, vector of file paths, single SpatRaster, or list of SpatRasters representing the spatial data to be processed.
+#' @param var.name character. Variable name you wish to extract and process.
+#' @param statistics character vector. Which statistic(s) to calculate (e.g., c("mean", "max")).
+#' @param agg.time character. Time scale to aggregate over (e.g., "days", "months", "years", "season").
+#' @param file.time character. Time scale of the input files ('daily', 'monthly', 'annual'). Default is 'annual'.
+#' @param shp.file character, SpatVector, SpatRaster, or NA. Shapefile or raster to mask the input data to. Default is NA.
+#' @param area.names character vector or NULL. Names of shapefile areas you want to retain. Default is NULL.
+#' @param tz character or NA. Time zone to convert dates to. No correction if NA. Default is NA.
+#' @param touches logical. If TRUE, all cells touched by lines or polygons will be masked, not just those on the center point. Default is TRUE.
+#' @param output.files character vector or NULL. Full output file paths corresponding to each input file if write.out is TRUE. Default is NULL.
+#' @param write.out logical. If TRUE, writes NetCDF files. If FALSE, returns a list of SpatRasterDatasets. Default is FALSE.
 #'
-#' @return netCDF file with same time dimensions as input file 
-#' 
+#' @return If write.out is TRUE, writes NetCDF files to disk. If FALSE, returns a named list containing SpatRasterDatasets representing the summarized data.
+#'
 #' @export
-
-make_2d_summary_gridded <- function(data.in,write.out = F,file.time = 'annual',output.files,shp.file,var.name,agg.time,tz = NA,statistics,touches = T, area.names){
+make_2d_summary_gridded <- function(data.in, var.name, statistics, agg.time, file.time = 'annual', shp.file = NA, area.names = NULL, tz = NA, touches = TRUE, output.files = NULL, write.out = FALSE) {
   
-  if(class(shp.file) %in% c('SpatVector','SpatRaster')){
-    shp.vect = shp.file
-    use.shp =T
-  }else if(!is.na(shp.file)){
-    shp.vect = terra::vect(shp.file)
-    use.shp =T
-  }else{
-    use.shp = F
+  # Standardize data.in
+  if (inherits(data.in, "SpatRaster")) {
+    data.ls <- list(data.in)
+  } else if (is.character(data.in)) {
+    if (!all(file.exists(data.in))) stop("One or more paths in data.in do not exist.")
+    data.ls <- as.list(data.in)
+  } else if (is.list(data.in) && all(sapply(data.in, inherits, c("SpatRaster","SpatRasterDataset")))) {
+    data.ls <- data.in
+  } else {
+    stop("data.in must be a file path, a vector of file paths, a single SpatRaster, or a list of SpatRasters.")
   }
   
-  
-  if(all(!is.na(area.names))){
-    shp.str = as.data.frame(shp.vect)
-    which.att = which(apply(shp.str,2,function(x) all(area.names %in% x)))
-    which.area =  match(area.names,shp.str[,which.att])
-    shp.vect = shp.vect[which.area]  
+  # Standardize shp.file
+  if (inherits(shp.file, c("SpatVector", "SpatRaster"))) {
+    shp.vect <- shp.file
+    use.shp <- TRUE
+  } else if (is.character(shp.file) && length(shp.file) == 1 && !is.na(shp.file)) {
+    shp.vect <- terra::vect(shp.file)
+    use.shp <- TRUE
+  } else {
+    use.shp <- FALSE
   }
   
-  #create iteration number based on file.time
-  if(file.time == 'annual'){
-    iter = 1:length(data.in)
-  }else if(file.time == 'daily' & agg.time %in% c('years','months')){
-    iter = 1
-  }else{
-    iter = 1:length(data.in)  
+  # Robust filtering for area.names
+  if (use.shp && !is.null(area.names) && !all(is.na(area.names))) {
+    shp.str <- as.data.frame(shp.vect)
+    valid_cols <- sapply(shp.str, function(col) all(area.names %in% col))
+    if (!any(valid_cols)) stop("None of the shapefile attributes contain all provided area.names.")
+    target_col <- names(valid_cols)[valid_cols][1]
+    shp.vect <- shp.vect[shp.str[[target_col]] %in% area.names, ]
   }
+  
+  # OPTIMIZATION: Process 'daily' files into a single unified stack before the loop begins,
+  # dropping convoluted split iteration logic entirely.
+  if (file.time == 'daily' && length(data.ls) > 1) {
+    if (all(sapply(data.ls, is.character))) {
+      # Use terra to safely stack character string raster sources
+      data_stack <- terra::rast(unlist(data.ls))
+      # Extract time as a fallback if NC files don't possess native time layers
+      file_dates <- suppressWarnings(as.Date(gsub('.*_([0-9]{4})-([0-9]{2})-([0-9]{2}).*', '\\1-\\2-\\3', unlist(data.ls))))
+      if (!any(is.na(file_dates))) terra::time(data_stack) <- file_dates
+    } else {
+      data_stack <- terra::rast(data.ls)
+    }
+    data.ls <- list(data_stack)
+  }
+  
+  if (file.time == 'monthly') stop('monthly files not yet implemented')
+  
+  out.ls <- list()
+  
+  for (i in seq_along(data.ls)) {
     
-    month.season = data.frame(month=1:12,season =rep(1:4,each =3))
+    if (is.character(data.ls[[i]])) {
+      data <- terra::rast(data.ls[[i]])
+    } else {
+      data <- data.ls[[i]]
+    }
     
-    out.ls = list()
-    for(i in iter){
+    data <- EDABUtilities::convert_2d_longitude_gridded(data)[[1]]
+    file.date <- as.Date(terra::time(data))
+    
+    if (!is.na(tz)) {
+      file.date <- as.Date(as.POSIXct(file.date, tz = tz), tz = tz)
+      terra::time(data) <- file.date
+    }
+    
+    # OPTIMIZATION: Pre-crop to bounding box once to reduce spatial memory footprint immediately
+    if (use.shp) {
+      data <- terra::crop(data, shp.vect)
+    }
+    
+    data.stat.ls <- list()
+    
+    for (j in seq_along(statistics)) {
       
-      if(file.time == 'annual'){
-        if(is.character(data.in)){
-          
-          data = terra::rast(data.in[i])
-          
-        }else if(class(data.in[[i]])[1] == 'SpatRaster'){
-          
-          if(class(data.in) == 'list'){
-            data = data.in[[i]]  
-          }else{
-            data = data.in
-          }
-          
-          
-        }else{
-          stop('data.in needs to be either file names or spatRasters')
-        } 
-        
-        file.date = terra::time(data)
-      }else if (file.time == 'daily'){
-        
-        if(is.character(data.in)){
-          
-          data = lapply(data.in,function(x) terra::rast(x))
-          file.date = as.Date(gsub( '.*_([0-9]{4})-([0-9]{2})-([0-9]{2}).*', '\\1-\\2-\\3', data.in))
-          
-        }else if(class(data.in[[i]])[1] == 'SpatRaster'){
-          
-          data = lapply(data.in,function(x) terra::rast(x))
-          file.date = as.Date(sapply(data,function(x) terra::time(x)))
-        }else{
-          stop('data.in needs to be either file names or spatRasters')
-        } 
-
-        data = terra::rast(data)
-        terra::time(data) = file.date
-        
-        
-      }else if(file.time == 'monthly'){
-        print('monthly files not yet implemented')
-      }else{
-        stop('file.time must be either annual, daily, or monthly')
+      # OPTIMIZATION: Calculate terra::tapp summary BEFORE masking to shrink the temporal depth footprint
+      if (agg.time == 'season') {
+        data.month <- as.numeric(format(file.date, format = '%m'))
+        data.season <- rep(1:4, each = 3)[data.month] # Simplified integer mapping
+        stat_layer <- terra::tapp(data, index = data.season, fun = statistics[j])
+      } else {
+        stat_layer <- terra::tapp(data, index = agg.time, fun = statistics[j])
       }
       
-      
-   
-      data = EDABUtilities::convert_longitude(data)
-      
-      file.date = as.Date(terra::time(data))
-      if(!is.na(tz)){
-        file.date = as.Date(as.POSIXct(file.date,tz = tz),tz = tz)
-        terra::time(data) = file.date
+      # OPTIMIZATION: Apply final exact polygon mask solely on the heavily reduced output summary
+      if (use.shp) {
+        stat_layer <- terra::mask(stat_layer, shp.vect, touches = touches)
       }
       
-      data.stat.ls = list()
-      for(j in 1:length(statistics)){
-        if(use.shp){
-          
-          data.shp = terra::crop(terra::mask(data,shp.vect,touches = touches),shp.vect)
-          
-          
-            if(agg.time == 'season'){
-              
-              # data.time = as.Date(terra::time(data.shp))
-              data.month = as.numeric(format(file.date,format = '%m'))
-              data.season = month.season$season[data.month]
-              data.stat.ls[[j]] = terra::tapp(data.shp,
-                                              index =data.season,
-                                              fun = statistics[j])
-            }else{
-              data.stat.ls[[j]] = terra::tapp(data.shp,
-                                              index =agg.time,
-                                              fun = statistics[j])
-              }
-          }else{
-          
-            if(agg.time == 'season'){
-              # data.time = as.Date(terra::time(data))
-              data.month = as.numeric(format(data.time,format = '%m'))
-              data.season = month.season$season[data.month]
-              data.stat.ls[[j]] = terra::tapp(data,
-                                      index =data.season,
-                                      fun = statistics[j])
-      
-            }else{
-              data.stat.ls[[j]] = terra::tapp(data,
-                                      index =agg.time,
-                                      fun = statistics[j])
-            }
-          }
+      data.stat.ls[[j]] <- stat_layer
+    }
+    
+    data.stat <- terra::sds(data.stat.ls)
+    names(data.stat) <- paste0(var.name, '_', statistics)
+    
+    if (write.out) {
+      if (is.null(output.files)) stop("output.files must be provided when write.out is TRUE.")
+      out_dir <- dirname(output.files[i])
+      if (!dir.exists(out_dir)) dir.create(out_dir, recursive = TRUE)
+      terra::writeCDF(data.stat, output.files[i], overwrite = TRUE)
+    } else {
+      out.ls[[i]] <- data.stat
+      if (is.character(data.ls[[i]])) {
+        names(out.ls)[i] <- basename(data.ls[[i]])
+      } else {
+        names(out.ls)[i] <- paste0("summary_", i)
       }
-      data.stat = terra::sds(data.stat.ls)
-      names(data.stat) = paste0(var.name,'_',statistics)
-      
-      if(write.out){
-        terra::writeCDF(data.stat, output.files[i],overwrite =T)
-      }else{
-        out.ls[[i]] = data.stat
-      }
+    }
   }
-
-  if(write.out ==F){
+  
+  if (!write.out) {
     return(out.ls)  
   }
-  
 }

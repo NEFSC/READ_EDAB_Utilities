@@ -6,27 +6,29 @@
 \usage{
 crop_nc_2d(
   data.in,
-  write.out = F,
-  output.files,
   shp.file,
   var.name,
-  area.names = NA
+  area.names = NA,
+  write.out = FALSE,
+  output.files = NULL
 )
 }
 \arguments{
-\item{data.in}{character vector of full input file names}
+\item{data.in}{character vector, list, or SpatRaster. Single file path, vector of file paths, single SpatRaster, or list of SpatRasters.}
 
-\item{write.out}{logical. If TRUE, will write a netCDF file with output.files. If FALSE will return a list of spatRasters}
+\item{shp.file}{string, SpatVector, or SpatRaster. The shapefile or spatial object used to crop the input data.}
 
-\item{output.files}{character vector of full output file names corresponding to each input file}
+\item{var.name}{string. Variable name you wish to extract.}
 
-\item{shp.file}{string. Shape file you wish to crop each input file to}
+\item{area.names}{character vector. Optional names of specific areas within the shapefile to filter by before cropping. Default is NA.}
 
-\item{var.name}{string. Variable name you wish to extract}
+\item{write.out}{logical. If TRUE, writes a netCDF file. If FALSE, returns a list of SpatRasters. Default is FALSE.}
+
+\item{output.files}{character vector. Full output file names corresponding to each input file. Required if write.out is TRUE. Default is NULL.}
 }
 \value{
-netCDF file with same time dimensions as input file
+A list of cropped SpatRasters if write.out is FALSE, or writes NetCDF files to disk if TRUE.
 }
 \description{
-descriptions
+This function crops a 2D NetCDF file or SpatRaster to the spatial extent of a provided shapefile or specific zones within it. It standardizes inputs and can either return a list of cropped SpatRasters in memory or write them directly to new NetCDF files.
 }

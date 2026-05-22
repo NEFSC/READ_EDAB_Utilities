@@ -2,7 +2,7 @@
 #'
 #' This function calculates a spatial anomaly by subtracting a reference climatology from a gridded dataset. It standardizes spatial inputs, aligns resolutions, and outputs either a list of SpatRasters to the R environment or writes the results directly to disk as NetCDF files.
 #'
-#' @param data.in character vector, list, or SpatRaster. Single file path, vector of file paths, single SpatRaster, or list of SpatRasters representing the raw data.
+#' @param data.in character vector, list, SpatRaster, or SpatRasterDataset. Single file path, vector of file paths, single spatial object, or list of spatial objects representing the raw data.
 #' @param climatology string or SpatRaster. The reference climatology to subtract from the input data. Should ideally be on the same resolution as data.in.
 #' @param var.name string. Variable name you wish to extract and write.
 #' @param shp.file string, SpatVector, or SpatRaster. The shapefile or spatial object used to crop/mask the data. Default is NA.
@@ -15,18 +15,24 @@
 #' @export
 make_2d_anomaly_gridded <- function(data.in, climatology, var.name, shp.file = NA, area.names = NA, write.out = FALSE, output.files = NULL) {
   
-  # Data Input Standardization
+  # --- Data Input Standardization ---
   if (inherits(data.in, "SpatRaster")) {
     data.ls <- list(data.in)
+  } else if (inherits(data.in, "SpatRasterDataset")) {
+    # Coerce single SpatRasterDataset to a multi-layer SpatRaster
+    data.ls <- list(terra::rast(data.in))
   } else if (is.character(data.in)) {
     data.ls <- as.list(data.in)
-  } else if (is.list(data.in) && all(sapply(data.in, inherits, "SpatRaster"))) {
-    data.ls <- data.in
+  } else if (is.list(data.in) && all(sapply(data.in, function(x) inherits(x, c("SpatRaster", "SpatRasterDataset"))))) {
+    # Coerce any SpatRasterDatasets hidden in the list to SpatRasters
+    data.ls <- lapply(data.in, function(x) {
+      if (inherits(x, "SpatRasterDataset")) terra::rast(x) else x
+    })
   } else {
-    stop("data.in must be a file path, a vector of file paths, a single SpatRaster, or a list of SpatRasters.")
+    stop("data.in must be a file path, a vector of file paths, a SpatRaster, a SpatRasterDataset, or a list of these.")
   }
   
-  # Spatial Input Standardization
+  # --- Spatial Input Standardization ---
   if (inherits(shp.file, c("SpatVector", "SpatRaster"))) {
     shp.vect <- shp.file
     use.shp <- TRUE
@@ -37,10 +43,10 @@ make_2d_anomaly_gridded <- function(data.in, climatology, var.name, shp.file = N
     use.shp <- FALSE
   }
   
-  # Climatology Standardization
+  # --- Climatology Standardization ---
   if (is.character(climatology)) {
     if (!file.exists(climatology)) stop(sprintf("Climatology file does not exist: %s", climatology))
-    climatology <- terra::rast(climatology)
+    climatology <- terra::rast(climatology)[[1]]
   }
   
   # --- Optimization: Pre-process spatial subsets and climatology OUTSIDE the loop ---
@@ -59,11 +65,11 @@ make_2d_anomaly_gridded <- function(data.in, climatology, var.name, shp.file = N
       if (is.null(target_col)) stop("None of the attributes in shp.file contain all specified area.names.")
       
       # Direct spatial subsetting
-      shp.vect <- shp.vect[shp.vect[[target_col]] %in% area.names, ]
+      shp.vect <- shp.vect[shp.vect[[target_col]][,1] %in% area.names, ]
     }
     
     # Pre-mask climatology once to avoid doing it N times inside the loop
-    climatology <- terra::mask(climatology, shp.vect)
+    climatology <- terra::mask(climatology[[1]], shp.vect)
   }
   
   out.ls <- list()
@@ -77,10 +83,11 @@ make_2d_anomaly_gridded <- function(data.in, climatology, var.name, shp.file = N
       data <- data.ls[[i]]
     }
     
-    data <- EDABUtilities::convert_longitude(data)
+    data <- EDABUtilities::convert_2d_longitude_gridded(data)[[1]]
     
     # Align extents and resolutions if mismatched
     if (!(all(terra::res(data) == terra::res(climatology)) && all(terra::ext(data) == terra::ext(climatology)))) {
+      climatology <- terra::crop(climatology,data)
       data <- terra::crop(terra::mask(data, climatology), climatology)
       data <- terra::resample(data, climatology)
     }

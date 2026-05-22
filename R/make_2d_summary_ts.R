@@ -1,77 +1,61 @@
-#' Provides summary statistics of 2d gridded data as time series by area
+#' Calculates summary statistics of 2D gridded data as a time series by area
 #'
-#' descriptions
+#' This function extracts spatial raster data across specified shapefile regions and aggregates it temporally to produce timeseries summary statistics. It processes inputs by grouping them (e.g., aggregating daily layers into annual time series) and outputs either a list of summarized data frames or writes RDS files directly.
 #'
-#' @param data.in Either a character vector of full input file names for a list of spatRasters
-#' @param file.time string. What time scale the input files are on ('daily','monthly','annual')? Assumes all monthly or annual files are on a daily timestep
-#' @param output.files character vector of full output file names corresponding to each processing group (one file per year)
-#' @param shp.file  string. Shape file you wish to crop each input file to
-#' @param area.names character vector. Names of the areas in the shapefile to extract
-#' @param var.name string. Variable name you wish to extract 
-#' @param statistics character vector. Which statistic to calculate
-#' @param agg.time character. Time scale to calculate climatology over (days,doy, months,season, or  years)
-#' @param tz string. Time zone to convert. No correction if NA
-#' @param touches logical. If TRUE, all cells touched by lines or polygons will be masked, not just those on the line render path, or whose center point is within the polygon
-#' @param write.out logical. If TRUE, will write a netCDF file with output.files. If FALSE will return a list of spatRasters
+#' @param data.in character vector, list, or SpatRaster. Single file path, vector of file paths, single SpatRaster, or list of SpatRasters representing the spatial data.
+#' @param var.name character. Variable name you wish to extract.
+#' @param statistics character vector. Which statistic(s) to calculate (e.g., c("mean", "max")).
+#' @param agg.time character. Time scale to calculate aggregation over (e.g., "days", "months", "season", "years").
+#' @param file.time character. What time scale the input files are on ('daily', 'monthly', 'annual'). Default is 'annual'.
+#' @param shp.file character, SpatVector, SpatRaster, or NA. Shapefile or raster to mask the input data to. Default is NA.
+#' @param area.names character vector or NULL. Names of the areas in the shapefile to extract. Default is NULL.
+#' @param tz character or NA. Time zone to convert. No correction if NA. Default is NA.
+#' @param touches logical. If TRUE, all cells touched by lines or polygons will be masked, not just those on the center point. Default is TRUE.
+#' @param output.files character vector or NULL. Full output file paths corresponding to each processing group. Default is NULL.
+#' @param write.out logical. If TRUE, writes RDS files. If FALSE, returns a list of data frames. Default is FALSE.
 #'
-#' @return a dataframe output variable summarized by timestep for each area.names
-#' 
-#' @importFrom magrittr "%>%"
+#' @return If write.out is TRUE, writes RDS files to disk. If FALSE, returns a list of data frames summarized by timestep for each area.
 #' 
 #' @export
-#' 
-
-make_2d_summary_ts = function(data.in, file.time, output.files, shp.file, area.names, var.name, agg.time, tz = NA, statistics, touches = TRUE, write.out = FALSE){
+make_2d_summary_ts <- function(data.in, var.name, statistics, agg.time, file.time = 'annual', shp.file = NA, area.names = NULL, tz = NA, touches = TRUE, output.files = NULL, write.out = FALSE) {
   
-  if(inherits(shp.file, c('SpatVector','SpatRaster'))){
-    shp.vect = shp.file
-    use.shp = TRUE
-  }else if(!is.na(shp.file)){
-    shp.vect = terra::vect(shp.file)
-    use.shp = TRUE
-  }else{
-    use.shp = FALSE
+  # Standardize data.in
+  if (inherits(data.in, "SpatRaster")) {
+    data.ls <- list(data.in)
+  } else if (is.character(data.in)) {
+    if (!all(file.exists(data.in))) stop("One or more paths in data.in do not exist.")
+    data.ls <- as.list(data.in)
+  } else if (is.list(data.in) && all(sapply(data.in, inherits, "SpatRaster"))) {
+    data.ls <- data.in
+  } else {
+    stop("data.in must be a file path, a vector of file paths, a single SpatRaster, or a list of SpatRasters.")
   }
   
-  out.ls = list()
-  
-  # Helper function to create an NA dataframe to preserve structure on failure
-  create_na_df <- function(current.id, stats.vec, areas.vec = NA) {
-    if (all(is.na(areas.vec))) areas.vec <- NA
-    
-    expand.grid(
-      time = NA,
-      agg.time = agg.time,
-      ls.id = current.id,
-      var.name = var.name,
-      statistic = stats.vec,
-      area = areas.vec,
-      value = NA,
-      stringsAsFactors = FALSE
-    )
+  # Standardize shp.file
+  if (inherits(shp.file, c('SpatVector', 'SpatRaster'))) {
+    shp.vect <- shp.file
+    use.shp <- TRUE
+  } else if (is.character(shp.file) && length(shp.file) == 1 && !is.na(shp.file)) {
+    shp.vect <- terra::vect(shp.file)
+    use.shp <- TRUE
+  } else {
+    use.shp <- FALSE
   }
   
-  # -------------------------------------------------------------------------
+  out.ls <- list()
+  
   # PRE-PROCESSING: Group inputs by year (if daily) or file (if annual)
-  # -------------------------------------------------------------------------
-  
-  input_groups <- list() # Will contain indices of data.in
-  loop_ids <- c()        # Will contain labels for the groups (e.g. Years)
+  input_groups <- list() 
+  loop_ids <- c()        
   
   if (file.time == 'daily') {
-    # If daily, we must find years and group files
-    if(is.character(data.in)){
-      
-      # Try pattern DD_MM_YYYY first as requested
-      # Regex explanation: look for 2 digits, underscore, 2 digits, underscore, 4 digits
-      file_dates <- suppressWarnings(as.Date(gsub(".*(\\d{4})-(\\d{2})-(\\d{2}).*", "\\1-\\2-\\3", data.in)))
-      
+    if (all(sapply(data.ls, is.character))) {
+      file_dates <- suppressWarnings(as.Date(gsub(".*(\\d{4})-(\\d{2})-(\\d{2}).*", "\\1-\\2-\\3", unlist(data.ls))))
     } else {
-      # List of rasters
-      file_dates <- as.Date(sapply(data.in, function(x) terra::time(x)[1]))
+      file_dates <- as.Date(sapply(data.ls, function(x) terra::time(x)[1]))
     }
     
-    if (any(is.na(file_dates))) stop("Could not parse dates from data.in to group by year. Ensure files have DD_MM_YYYY or YYYY-MM-DD pattern.")
+    if (any(is.na(file_dates))) stop("Could not parse dates from data.in to group by year.")
     
     file_years <- as.numeric(format(file_dates, "%Y"))
     unique_yrs <- sort(unique(file_years))
@@ -82,220 +66,146 @@ make_2d_summary_ts = function(data.in, file.time, output.files, shp.file, area.n
     loop_ids <- unique_yrs
     
   } else {
-    # ANNUAL CASE
-    # Extract YYYY from filename to use as ID
-    input_groups <- as.list(1:length(data.in))
-    
-    if(is.character(data.in)){
-      # Try to find 4 digits in the filename
-      extracted_years <- gsub(".*?(\\d{4}).*", "\\1", basename(data.in))
-      # Verify if we actually found numbers, otherwise fallback to filename
-      if(all(grepl("^\\d{4}$", extracted_years))) {
+    input_groups <- as.list(seq_along(data.ls))
+    if (all(sapply(data.ls, is.character))) {
+      extracted_years <- gsub(".*?(\\d{4}).*", "\\1", basename(unlist(data.ls)))
+      if (all(grepl("^\\d{4}$", extracted_years))) {
         loop_ids <- extracted_years
       } else {
-        loop_ids <- basename(data.in)
+        loop_ids <- basename(unlist(data.ls))
       }
     } else {
-      loop_ids <- 1:length(data.in)
+      loop_ids <- seq_along(data.ls)
     }
   }
   
-  # Check output file length match
   if (write.out && length(output.files) != length(input_groups)) {
-    stop(paste0("Length mismatch: ", length(input_groups), " processing groups (years) but ", length(output.files), " output files provided."))
+    stop(paste0("Length mismatch: ", length(input_groups), " processing groups but ", length(output.files), " output files provided."))
   }
   
-  # -------------------------------------------------------------------------
   # MAIN LOOP
-  # -------------------------------------------------------------------------
-  
-  for(i in 1:length(input_groups)){
+  for (i in seq_along(input_groups)) {
     
     current_indices <- input_groups[[i]]
     current_ls_id <- loop_ids[i]
     
-    # 1. Try to load data -----------------------------------------------------
-    data <- tryCatch({
-      
-      if(file.time == 'annual'){
-        # Load single file/raster
-        idx <- current_indices # Single index
-        if(is.character(data.in)){
-          r <- terra::rast(data.in[idx])
-        }else if(inherits(data.in[[idx]], 'SpatRaster')){
-          if(inherits(data.in, 'list')) r <- data.in[[idx]] else r <- data.in
-        }
-        r
-        
-      } else if (file.time == 'daily'){
-        # Load GROUP of files for this year
-        if(is.character(data.in)){
-          # Load only files for this year
-          files_to_load <- data.in[current_indices]
-          r_list <- lapply(files_to_load, terra::rast)
-          
-          # Re-extract dates for these specific files to set time correctly
-          # We use the same logic as above to ensure consistency
-          dates_subset <- suppressWarnings(as.Date(gsub(".*(\\d{4})-(\\d{2})-(\\d{2}).*", "\\1-\\2-\\3", files_to_load)))
-          if(any(is.na(dates_subset))) {
-            dates_subset <- suppressWarnings(as.Date(gsub('.*_([0-9]{4})-([0-9]{2})-([0-9]{2}).*', '\\1-\\2-\\3', files_to_load)))
-          }
-          
-          r <- terra::rast(r_list)
-          terra::time(r) <- dates_subset
-          
-        } else if(inherits(data.in[[1]], 'SpatRaster')){
-          # List of rasters
-          r_list <- data.in[current_indices]
-          dates_subset <- as.Date(sapply(r_list, function(x) terra::time(x)))
-          
-          r <- terra::rast(r_list)
-          terra::time(r) <- dates_subset
-        }
-        r
-        
-      } else if(file.time == 'monthly'){
-        print('monthly files not yet implemented')
-        NULL
-      }
-    }, error = function(e) {
-      warning(paste("Error loading data for group", current_ls_id, ":", e$message))
-      return(NULL)
-    })
-    
-    # If data load failed or raster has no values, skip processing
-    if(is.null(data) || terra::ncell(data) == 0) {
-      data.stat.df <- create_na_df(current_ls_id, statistics, if(use.shp) area.names else NA)
-      if(write.out){
-        saveRDS(data.stat.df, output.files[i])
+    # Simplified data loader capitalizing on data.ls standardization
+    if (file.time == 'annual') {
+      data <- if (is.character(data.ls[[current_indices]])) terra::rast(data.ls[[current_indices]]) else data.ls[[current_indices]]
+    } else if (file.time == 'daily') {
+      if (all(sapply(data.ls, is.character))) {
+        files_to_load <- unlist(data.ls)[current_indices]
+        data <- terra::rast(files_to_load)
+        dates_subset <- suppressWarnings(as.Date(gsub(".*(\\d{4})-(\\d{2})-(\\d{2}).*", "\\1-\\2-\\3", files_to_load)))
+        terra::time(data) <- dates_subset
       } else {
-        out.ls[[i]] = data.stat.df
+        r_list <- data.ls[current_indices]
+        data <- terra::rast(r_list)
+        dates_subset <- as.Date(sapply(r_list, function(x) terra::time(x)))
+        terra::time(data) <- dates_subset
       }
-      next
+    } else if (file.time == 'monthly') {
+      stop('monthly files not yet implemented')
     }
     
-    file.date = terra::time(data)
-    
-    if(!is.na(tz)){
-      file.date = as.Date(as.POSIXct(file.date, tz = tz), tz = tz)
-      terra::time(data) = file.date
+    file.date <- terra::time(data)
+    if (!is.na(tz)) {
+      file.date <- as.Date(as.POSIXct(file.date, tz = tz), tz = tz)
+      terra::time(data) <- file.date
     }
     
-    if(agg.time == 'season'){
-      month.season = data.frame(month=1:12, season = rep(1:4, each = 3))
-      data.month = as.numeric(format(file.date, format = "%m"))
-      data.season = month.season$season[data.month]
-      season.names = 1:4
+    if (agg.time == 'season') {
+      data.season <- rep(1:4, each = 3)[as.numeric(format(file.date, format = "%m"))]
     }
     
-    # 2. Calculate Statistics -------------------------------------------------
-    
-    if(use.shp == TRUE){
-      
-      shp.str = as.data.frame(shp.vect)
-      which.att = which(apply(shp.str, 2, function(x) all(area.names %in% x)))
-      
-      if(length(which.att) == 0) {
-        warning("Could not match area.names to shapefile attributes.")
+    # Calculate Statistics 
+    if (use.shp) {
+      shp.str <- as.data.frame(shp.vect)
+      if (!is.null(area.names) && !all(is.na(area.names))) {
+        valid_cols <- sapply(shp.str, function(col) all(area.names %in% col))
+        if (!any(valid_cols)) stop("None of the shapefile attributes contain all provided area.names.")
+        target_col <- names(valid_cols)[valid_cols][1]
+        which.area <- match(area.names, shp.str[[target_col]])
+      } else {
         which.area <- NA
-      } else {
-        which.area = match(area.names, shp.str[,which.att])
       }
       
-      all_area_results = list()
+      # OPTIMIZATION: Crop immediately to shapefile bounding box before ANY iterations
+      data <- terra::crop(data, shp.vect)
       
-      # OPTIMIZATION: Loop over AREAS first, then STATISTICS
-      for(j in 1:length(area.names)){
-        
-        # Try to crop and mask ONCE per area
-        area.processed <- tryCatch({
-          if(is.na(which.area[j])) stop("Invalid area index")
-          area.poly <- shp.vect[which.area[j],]
-          area.data = terra::crop(terra::mask(data, area.poly, touches = touches), area.poly)
-          
-          if(all(is.na(terra::values(area.data, mat=FALSE)))){
-            stop("No data in area")
-          }
-          area.data
-        }, error = function(e) return(NULL))
-        
-        if(is.null(area.processed)){
-          all_area_results[[j]] = create_na_df(current_ls_id, statistics, area.names[j])
-          next
+      # OPTIMIZATION: Pull terra::tapp entirely out of the area loop. 
+      # Execute once per statistic across the master clipped extent.
+      agg_master_ls <- list()
+      for (s in seq_along(statistics)) {
+        if (agg.time == 'season') {
+          agg_master_ls[[s]] <- terra::tapp(data, fun = statistics[s], index = data.season)
+        } else {
+          agg_master_ls[[s]] <- terra::tapp(data, fun = statistics[s], index = agg.time)
         }
+      }
+      
+      all_area_results <- list()
+      for (j in seq_along(area.names)) {
         
-        stat_results_list = list()
+        area.poly <- shp.vect[which.area[j], ]
+        stat_results_list <- list()
         
-        for(s in 1:length(statistics)){
-          try_stat <- tryCatch({
-            if(agg.time == 'season'){
-              area.agg = terra::tapp(area.processed, fun = statistics[s], index = data.season)
-              t.out = sort(unique(data.season))
-            } else {
-              area.agg = terra::tapp(area.processed, fun = statistics[s], index = agg.time)  
-              t.out = terra::time(area.agg)
-            }
-            
-            stat_res = terra::global(area.agg, statistics[s], na.rm=TRUE)
-            list(time = t.out, val = stat_res[,1])
-          }, error = function(e) list(time = NA, val = NA))
+        for (s in seq_along(statistics)) {
+          # OPTIMIZATION: We now merely crop/mask the ALREADY temporally-aggregated layer
+          area.data <- terra::mask(terra::crop(agg_master_ls[[s]], area.poly), area.poly, touches = touches)
+          stat_res <- terra::global(area.data, statistics[s], na.rm = TRUE)
+          t.out <- if (agg.time == 'season') sort(unique(data.season)) else terra::time(agg_master_ls[[s]])
           
-          stat_results_list[[s]] = data.frame(
-            time = try_stat$time,
+          stat_results_list[[s]] <- data.frame(
+            time = t.out,
             agg.time = agg.time,
             ls.id = current_ls_id,
             var.name = var.name,
             statistic = statistics[s],
             area = area.names[j],
-            value = try_stat$val
+            value = stat_res[, 1]
           )
         }
-        all_area_results[[j]] = dplyr::bind_rows(stat_results_list)
+        all_area_results[[j]] <- dplyr::bind_rows(stat_results_list)
       }
-      data.stat.df = dplyr::bind_rows(all_area_results)
+      data.stat.df <- dplyr::bind_rows(all_area_results)
       
     } else {
-      # Non-shapefile processing
-      agg.stat.ls = list()
-      
-      for(s in 1:length(statistics)){
-        stat.val <- tryCatch({
-          if(all(is.na(terra::values(data, mat=FALSE)))) stop("Raster is empty")
-          
-          if(agg.time == 'season'){
-            data.agg = terra::tapp(data, fun = statistics[s], index = data.season)
-            t.out = sort(unique(data.season))
-          } else {
-            data.agg = terra::tapp(data, fun = statistics[s], index = agg.time)
-            t.out = terra::time(data.agg)
-          }
-          
-          res = terra::global(data.agg, statistics[s], na.rm=TRUE)
-          list(time = t.out, val = res[,1])
-          
-        }, error = function(e){
-          return(list(time = NA, val = NA))
-        })
+      agg.stat.ls <- list()
+      for (s in seq_along(statistics)) {
         
-        agg.stat.ls[[s]] = data.frame(time = stat.val$time,
-                                      agg.time = agg.time,
-                                      ls.id = current_ls_id,
-                                      var.name = var.name,
-                                      statistic = statistics[s],
-                                      area = NA,
-                                      value = stat.val$val)
+        if (agg.time == 'season') {
+          data.agg <- terra::tapp(data, fun = statistics[s], index = data.season)
+          t.out <- sort(unique(data.season))
+        } else {
+          data.agg <- terra::tapp(data, fun = statistics[s], index = agg.time)
+          t.out <- terra::time(data.agg)
+        }
+        
+        res <- terra::global(data.agg, statistics[s], na.rm = TRUE)
+        agg.stat.ls[[s]] <- data.frame(
+          time = t.out,
+          agg.time = agg.time,
+          ls.id = current_ls_id,
+          var.name = var.name,
+          statistic = statistics[s],
+          area = NA,
+          value = res[, 1]
+        )
       }
-      data.stat.df = dplyr::bind_rows(agg.stat.ls)
+      data.stat.df <- dplyr::bind_rows(agg.stat.ls)
     }
     
-    if(write.out){
+    if (write.out) {
+      out_dir <- dirname(output.files[i])
+      if (!dir.exists(out_dir)) dir.create(out_dir, recursive = TRUE)
       saveRDS(data.stat.df, output.files[i])
-    }else{
-      out.ls[[i]] = data.stat.df
+    } else {
+      out.ls[[i]] <- data.stat.df
     }
   }
   
-  if(write.out == FALSE){
+  if (!write.out) {
     return(out.ls)  
   }
 }
