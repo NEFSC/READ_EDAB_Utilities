@@ -1,84 +1,103 @@
-#' Provides a gridded climatology based on a reference dates
+#' Calculates a gridded climatology from spatial data based on reference dates
 #'
-#' descriptions
+#' This function aggregates daily or periodic spatial data over a specified time scale (e.g., months) and calculates a summary statistic to establish a baseline climatology. It can optionally mask the data to specific shapefile regions before processing.
 #'
-#' @param data.in Either a character vector of full input file names for a list of spatRasters
-#' @param output.files character vector of full output file name
-#' @param shp.file  string. Shape file you wish to crop each input file to
-#' @param var.name string. Variable name you wish to extract 
-#' @param area.names character vector. Names of shape file areas you want to summarise
-#' @param start.time character. Either a date, year, julian day, or month corresponding to agg.time
-#' @param stop.time  character. Either a date, year, julian day, or month corresponding to agg.time
-#' @param agg.time character. Time scale to calculate climatology over (days,doy, months, or years)
-#' @param statistic character. The statistic over which to calculate climatology from
-#' @param write.out logical. If TRUE, will write a netCDF file with output.files. If FALSE will return a list of spatRasters
+#' @param data.in character vector, list, or SpatRaster. Single file path, vector of file paths, single SpatRaster, or list of SpatRasters representing the data to be processed.
+#' @param var.name character. Variable name you wish to extract and process.
+#' @param agg.time character. Time scale to calculate climatology over (e.g., "days", "doy", "months", or "years").
+#' @param statistic character. The statistic over which to calculate climatology (e.g., "mean", "max").
+#' @param start.time numeric or character. The starting time value to filter the aggregated data.
+#' @param stop.time numeric or character. The stopping time value to filter the aggregated data.
+#' @param shp.file character, SpatVector, SpatRaster, or NA. Shapefile or raster to mask the input data to. Default is NA.
+#' @param area.names character vector or NULL. Names of shapefile areas you want to retain. Default is NULL.
+#' @param output.files character vector or NULL. Full output file path(s) for the NetCDF file if write.out is TRUE. Default is NULL.
+#' @param write.out logical. If TRUE, writes a netCDF file. If FALSE, returns a named list containing the climatology SpatRaster. Default is FALSE.
 #'
-#' @return netCDF file with same time dimensions as input file 
+#' @return If write.out is TRUE, writes a NetCDF file to disk. If FALSE, returns a named list containing the SpatRaster of the climatology.
 #' 
 #' @export
-
-make_2d_climatology_gridded <- function(data.in,write.out = F,output.files,shp.file,var.name,area.names,start.time, stop.time,agg.time,statistic){
+make_2d_climatology_gridded <- function(data.in, var.name, agg.time, statistic, start.time, stop.time, shp.file = NA, area.names = NULL, output.files = NULL, write.out = FALSE) {
   
-  if(class(shp.file) %in% c('SpatVector','SpatRaster')){
-    shp.vect = shp.file
-    use.shp =T
-  }else if(!is.na(shp.file)){
-    shp.vect = terra::vect(shp.file)
-    use.shp =T
-  }else{
-    use.shp = F
+  # Standardize data.in and assert file existence early
+  if (inherits(data.in, "SpatRaster")) {
+    data.ls <- list(data.in)
+  } else if (is.character(data.in)) {
+    if (!all(file.exists(data.in))) stop("One or more paths in data.in do not exist.")
+    data.ls <- as.list(data.in)
+  } else if (is.list(data.in) && all(sapply(data.in, inherits, "SpatRaster"))) {
+    data.ls <- data.in
+  } else {
+    stop("data.in must be a file path, a vector of file paths, a single SpatRaster, or a list of SpatRasters.")
   }
   
-  if(all(!is.na(area.names))){
-    shp.str = as.data.frame(shp.vect)
-    which.att = which(apply(shp.str,2,function(x) all(area.names %in% x)))
-    which.area =  match(area.names,shp.str[,which.att])
-    shp.vect = shp.vect[which.area]  
+  # Standardize shp.file
+  if (inherits(shp.file, c("SpatVector", "SpatRaster"))) {
+    shp.vect <- shp.file
+    use.shp <- TRUE
+  } else if (is.character(shp.file) && length(shp.file) == 1 && !is.na(shp.file)) {
+    shp.vect <- terra::vect(shp.file)
+    use.shp <- TRUE
+  } else {
+    use.shp <- FALSE
   }
   
-  data.time.agg.ls =list()
-  for(i in 1:length(data.in)){
+  # Robust filtering for area.names
+  if (use.shp && !is.null(area.names) && !all(is.na(area.names))) {
+    shp.str <- as.data.frame(shp.vect)
+    valid_cols <- sapply(shp.str, function(col) all(area.names %in% col))
     
-    if(is.character(data.in)){
-      
-      data = terra::rast(data.in[i])
-      
-    }else if(class(data.in[[i]])[1] == 'SpatRaster'){
-      
-      data = data.in[[i]]
-      
-    }else{
-      stop('data.in needs to be either file names or spatRasters')
-    } 
-    
-    data = EDABUtilities::convert_longitude(data)
-    
-    if(use.shp){
-
-      data.shp = terra::mask(data,shp.vect)
-      data.time.agg = terra::tapp(data.shp,
-                             index =agg.time,
-                             fun = statistic)
-    }else{
-      
-      
-      data.time.agg = terra::tapp(data,
-                              index =agg.time,
-                              fun = statistic)
-      
+    if (!any(valid_cols)) {
+      stop("None of the shapefile attributes contain all provided area.names.")
     }
-    data.time = terra::time(data.time.agg)
-    which.time = which(data.time>=start.time & data.time<=stop.time)  
-    data.time.agg.ls[[i]] = terra::subset(data.time.agg,which.time)
+    target_col <- names(valid_cols)[valid_cols][1]
+    shp.vect <- shp.vect[shp.str[[target_col]] %in% area.names, ]
   }
   
-  data.stack = terra::sds(data.time.agg.ls)
-  data.clim =terra::app(data.stack,statistic)
+  data.time.agg.ls <- list()
   
-  if(write.out){
-    terra::writeCDF(data.clim, output.files[i],varname = paste0(var.name,'_',statistic),overwrite =T)
-  }else{
-    return(data.clim)  
+  for (i in seq_along(data.ls)) {
+    
+    if (is.character(data.ls[[i]])) {
+      data <- terra::rast(data.ls[[i]])
+    } else {
+      data <- data.ls[[i]]
+    }
+    
+    data <- EDABUtilities::convert_longitude(data)
+    
+    # 1. OPTIMIZATION: Aggregate time BEFORE masking to reduce layer dimensions footprint
+    data.time.agg <- terra::tapp(data, index = agg.time, fun = statistic)
+    
+    # 2. Subset times safely
+    data.time <- terra::time(data.time.agg)
+    which.time <- which(data.time >= start.time & data.time <= stop.time)
+    
+    if (length(which.time) == 0) {
+      stop(paste("No layers matched start.time and stop.time parameters for dataset index:", i))
+    }
+    data.subset <- terra::subset(data.time.agg, which.time)
+    
+    # 3. OPTIMIZATION: Mask significantly fewer aggregated subset layers
+    if (use.shp) {
+      data.subset <- terra::mask(data.subset, shp.vect)
+    }
+    
+    data.time.agg.ls[[i]] <- data.subset
   }
-
+  
+  # Stacking directly as a single multi-layered raster is often cleaner than sds for calculating app() metrics
+  data.stack <- terra::rast(data.time.agg.ls)
+  data.clim <- terra::app(data.stack, fun = statistic)
+  
+  if (write.out) {
+    if (is.null(output.files)) stop("output.files must be provided when write.out is TRUE.")
+    out_dir <- dirname(output.files[1])
+    if (!dir.exists(out_dir)) dir.create(out_dir, recursive = TRUE)
+    
+    terra::writeCDF(data.clim, output.files[1], varname = paste0(var.name, '_', statistic), overwrite = TRUE)
+  } else {
+    out.ls <- list(data.clim)
+    names(out.ls) <- paste0("climatology_", statistic)
+    return(out.ls)  
+  }
 }
