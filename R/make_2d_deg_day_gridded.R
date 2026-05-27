@@ -15,7 +15,7 @@
 #' @return If write.out is TRUE, writes a NetCDF file with the same spatial dimensions as the input file. If FALSE, returns a named list of SpatRasters. 
 #' 
 #' @export
-make_2d_deg_day_gridded_nc <- function(data.in, var.name, statistic, ref.value, type, shp.file = NA, area.names = NULL, output.files = NULL, write.out = FALSE) {
+make_2d_deg_day_gridded <- function(data.in, var.name, statistic, ref.value, type, shp.file = NA, area.names = NULL, output.files = NULL, write.out = FALSE) {
   
   # Standardize data.in and verify files
   if (inherits(data.in, "SpatRaster")) {

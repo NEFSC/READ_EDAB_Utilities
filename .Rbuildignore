@@ -1,3 +1,7 @@
 ^READ_EDAB_Utilities\.Rproj$
 ^\.Rproj\.user$
 ^READ_EDAB_Utilities\data\test_inputs.R
+^_pkgdown\.yml$
+^docs$
+^pkgdown$
+^\.github$

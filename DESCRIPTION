@@ -21,3 +21,4 @@ Imports:
     dplyr,
     terra,
     magrittr
+URL: https://nefsc.github.io/READ_EDAB_Utilities/

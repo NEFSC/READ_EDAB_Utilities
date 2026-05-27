@@ -1,0 +1,31 @@
+url: https://nefsc.github.io/READ_EDAB_Utilities/
+template:
+  bootstrap: 5
+navbar:
+  structure:
+    left:
+    - intro
+    - reference
+    - articles
+    - news
+    right: github
+reference:
+- title: 2D Gridded Pipeline
+  desc: Functions for spatial cropping, masking, and gridded anomalies.
+  contents:
+  - crop_nc_2d
+  - mask_nc_2d
+  - convert_2d_longitude_gridded
+  - make_2d_summary_gridded
+  - make_2d_climatology_gridded
+  - make_2d_anomaly_gridded
+  - make_2d_deg_day_gridded
+- title: 2D Timeseries Pipeline
+  desc: Functions for regional aggregation and tabular anomalies.
+  contents:
+  - make_2d_summary_ts
+  - make_2d_climatology_ts
+  - make_2d_anomaly_ts
+  - make_2d_deg_day_ts
+- title: Coordinate Extraction
+  contents: extract_daily_coord
