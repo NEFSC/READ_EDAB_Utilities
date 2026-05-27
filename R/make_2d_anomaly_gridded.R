@@ -1,79 +1,124 @@
-#' Provides a gridded climatology based on a reference dates
+#' Provides a gridded anomaly based on a reference climatology
 #'
-#' descriptions
+#' This function calculates a spatial anomaly by subtracting a reference climatology from a gridded dataset. It standardizes spatial inputs, aligns resolutions, and outputs either a list of SpatRasters to the R environment or writes the results directly to disk as NetCDF files.
 #'
-#' @param data.in Either a character vector of full input file names for a list of spatRasters
-#' @param climatology Either an input file name or spatRaster for the reference climatology. should be on same resolution as data.in
-#' @param output.files character vector of full output file names corresponding to each input file
-#' @param shp.file  string. Shape file you wish to crop each input file to
-#' @param var.name string. Variable name you wish to extract 
-#' @param area.names character vector. Names of shape file areas you want to summarise
-#' @param write.out logical. If TRUE, will write a netCDF file with output.files. If FALSE will return a list of spatRasters
+#' @param data.in character vector, list, SpatRaster, or SpatRasterDataset. Single file path, vector of file paths, single spatial object, or list of spatial objects representing the raw data.
+#' @param climatology string or SpatRaster. The reference climatology to subtract from the input data. Should ideally be on the same resolution as data.in.
+#' @param var.name string. Variable name you wish to extract and write.
+#' @param shp.file string, SpatVector, or SpatRaster. The shapefile or spatial object used to crop/mask the data. Default is NA.
+#' @param area.names character vector. Optional names of specific areas within the shapefile to filter by before masking. Default is NA.
+#' @param write.out logical. If TRUE, writes a netCDF file. If FALSE, returns a list of SpatRasters. Default is FALSE.
+#' @param output.files character vector. Full output file names corresponding to each input file. Required if write.out is TRUE. Default is NULL.
 #'
-#' @return netCDF file with same time dimensions as input file 
+#' @return A list of SpatRasters containing the anomalies if write.out is FALSE, or writes NetCDF files to disk if TRUE.
 #' 
 #' @export
-#' 
-
-make_2d_anomaly_gridded = function(data.in,climatology,output.files,shp.file,var.name,area.names = NA,write.out =F){
+make_2d_anomaly_gridded <- function(data.in, climatology, var.name, shp.file = NA, area.names = NA, write.out = FALSE, output.files = NULL) {
   
-  
-  if(!is.na(shp.file)){
-    shp.vect = terra::vect(shp.file)
+  # --- Data Input Standardization ---
+  if (inherits(data.in, "SpatRaster")) {
+    data.ls <- list(data.in)
+  } else if (inherits(data.in, "SpatRasterDataset")) {
+    # Coerce single SpatRasterDataset to a multi-layer SpatRaster
+    data.ls <- list(terra::rast(data.in))
+  } else if (is.character(data.in)) {
+    data.ls <- as.list(data.in)
+  } else if (is.list(data.in) && all(sapply(data.in, function(x) inherits(x, c("SpatRaster", "SpatRasterDataset"))))) {
+    # Coerce any SpatRasterDatasets hidden in the list to SpatRasters
+    data.ls <- lapply(data.in, function(x) {
+      if (inherits(x, "SpatRasterDataset")) terra::rast(x) else x
+    })
+  } else {
+    stop("data.in must be a file path, a vector of file paths, a SpatRaster, a SpatRasterDataset, or a list of these.")
   }
   
-  if(is.character(climatology)){
-    
-    climatology = terra::rast(climatology)
+  # --- Spatial Input Standardization ---
+  if (inherits(shp.file, c("SpatVector", "SpatRaster"))) {
+    shp.vect <- shp.file
+    use.shp <- TRUE
+  } else if (is.character(shp.file) && length(shp.file) == 1 && !is.na(shp.file)) {
+    shp.vect <- terra::vect(shp.file)
+    use.shp <- TRUE
+  } else {
+    use.shp <- FALSE
   }
   
-  out.ls = list()
-  for(i in 1:length(data.in)){
-    
-    if(is.character(data.in)){
+  # --- Climatology Standardization ---
+  if (is.character(climatology)) {
+    if (!file.exists(climatology)) stop(sprintf("Climatology file does not exist: %s", climatology))
+    climatology <- terra::rast(climatology)[[1]]
+  }
+  
+  # --- Optimization: Pre-process spatial subsets and climatology OUTSIDE the loop ---
+  if (use.shp) {
+    if (!is.null(area.names) && !all(is.na(area.names))) {
+      shp.str <- as.data.frame(shp.vect)
       
-      data = terra::rast(data.in[i])
+      # Safely locate the attribute column containing the area names
+      target_col <- NULL
+      for (col in names(shp.str)) {
+        if (all(area.names %in% shp.str[[col]])) {
+          target_col <- col
+          break
+        }
+      }
+      if (is.null(target_col)) stop("None of the attributes in shp.file contain all specified area.names.")
       
-    }else if(class(data.in[[i]])[1] == 'SpatRaster'){
-      
-      data = data.in[[i]]
-      
-    }else{
-      stop('data.in needs to be either file names or spatRasters')
-    } 
-    
-    data = EDABUtilities::convert_longitude(data)
-    
-    if(!(all(terra::res(data) == terra::res(climatology)) & all(terra::ext(data) == terra::ext(climatology)))){
-      
-      data = terra::crop(terra::mask(data,climatology),climatology)
-      data = terra::resample(data,climatology)
-      
+      # Direct spatial subsetting
+      shp.vect <- shp.vect[shp.vect[[target_col]][,1] %in% area.names, ]
     }
     
-    if(!is.na(shp.file)){
-      
-      shp.str = as.data.frame(shp.vect)
-      which.att = which(apply(shp.str,2,function(x) all(area.names %in% x)))
-      which.area =  match(area.names,shp.str[,which.att])
-      
-      
-      data = terra::mask(data,shp.vect[which.area,])
-      climatology = terra::mask(climatology,shp.vect[which.area,])
-      
+    # Pre-mask climatology once to avoid doing it N times inside the loop
+    climatology <- terra::mask(climatology[[1]], shp.vect)
+  }
+  
+  out.ls <- list()
+  
+  for (i in seq_along(data.ls)) {
+    
+    if (is.character(data.ls[[i]])) {
+      if (!file.exists(data.ls[[i]])) stop(sprintf("File does not exist: %s", data.ls[[i]]))
+      data <- terra::rast(data.ls[[i]])
+    } else {
+      data <- data.ls[[i]]
     }
     
-    data.anom = data - climatology
+    data <- EDABUtilities::convert_2d_longitude_gridded(data)[[1]]
     
-    if(write.out){
-      writeCDF(data.anom, output.files[i],varname = paste0(var.name,'_',statistic),overwrite =T)
-    }else{
-      out.ls[[i]] = data.anom
+    # Align extents and resolutions if mismatched
+    if (!(all(terra::res(data) == terra::res(climatology)) && all(terra::ext(data) == terra::ext(climatology)))) {
+      climatology <- terra::crop(climatology,data)
+      data <- terra::crop(terra::mask(data, climatology), climatology)
+      data <- terra::resample(data, climatology)
+    }
+    
+    if (use.shp) {
+      data <- terra::mask(data, shp.vect)
+    }
+    
+    # Calculate anomaly (NAs in the pre-masked climatology propagate automatically)
+    data.anom <- data - climatology
+    
+    if (write.out) {
+      if (is.null(output.files) || length(output.files) != length(data.ls)) {
+        stop("output.files must be provided and match the length of data.in when write.out is TRUE.")
+      }
+      
+      out_dir <- dirname(output.files[i])
+      if (!dir.exists(out_dir)) dir.create(out_dir, recursive = TRUE)
+      
+      terra::writeCDF(data.anom, output.files[i], varname = paste0(var.name, "_anomaly"), overwrite = TRUE)
+    } else {
+      out.ls[[i]] <- data.anom
     }
   }
   
-  if(write.out ==F){
+  if (write.out == FALSE) {
+    if (is.character(data.in)) {
+      names(out.ls) <- basename(data.in)
+    } else {
+      names(out.ls) <- paste0("layer_", seq_along(out.ls))
+    }
     return(out.ls)  
   }
-  
 }

@@ -5,39 +5,33 @@
 \title{Matches daily coordinates to gridded data}
 \usage{
 extract_daily_coord(
-  input.dir,
-  input.prefix,
-  input.type,
-  output.dir,
-  output.prefix,
-  coordinates,
-  search.radius = 0,
+  data.in,
+  coord.df,
   var.name,
-  statistics
+  search.radius = 0,
+  statistics = "mean",
+  write.out = FALSE,
+  output.file = NULL
 )
 }
 \arguments{
-\item{input.dir}{String. The full input directory for daily input files}
+\item{data.in}{character vector, list, or SpatRaster. Single file path, vector of file paths, single SpatRaster, or list of SpatRasters.}
 
-\item{input.prefix}{string. The prefix of the input files}
+\item{coord.df}{data.frame. A dataframe containing 'lat', 'lon', and 'date' columns to be extracted from the gridded data.}
 
-\item{input.type}{string. The type of input data (e.g., 'daily', 'annual'), assumes data within at daily scale}
+\item{var.name}{string. The name of the variable being extracted.}
 
-\item{output.dir}{string. The full output directory for the gridded data}
+\item{search.radius}{numeric. The number of cell "rings" around the closest match to aggregate over. 0 = closest cell, 1 = 3x3 cells around closest, etc.}
 
-\item{output.prefix}{string. The prefix of the output files}
+\item{statistics}{character vector. The statistics to be used for the gridded data. Options are 'mean', 'median', 'min', 'max', 'sd', 'var', 'sum'.}
 
-\item{coordinates}{dataframe of lat, lon, and date to be extracted from daily data}
+\item{write.out}{logical. If TRUE, writes the output to a csv file. If FALSE returns the output as a dataframe. Default is FALSE.}
 
-\item{search.radius}{numeric. The number of cell "rings" around the closest match to aggregate over. 0 = closest cell, 1 = 3x3 cells around closest, etc}
-
-\item{var.name}{string. The name of the variable being extracted, used for output file naming}
-
-\item{statistics}{character vector. The statistics to be used for the gridded data. Options are 'mean', 'median', 'min', 'max', 'sd', 'var', 'sum'}
+\item{output.file}{string. Full output file path (including .csv extension). Required if write.out is TRUE. Default is NULL.}
 }
 \value{
-a csv with appended values from coordinates input
+A dataframe with appended values from the gridded data matching the coordinates input, or writes a CSV if write.out is TRUE.
 }
 \description{
-descriptions
+This function extracts values from a daily or multi-layer gridded dataset at specific coordinate and time locations. It standardizes inputs and optionally computes focal statistics within a specified search radius around the target coordinates.
 }

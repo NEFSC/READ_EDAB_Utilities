@@ -2,45 +2,45 @@
 % Please edit documentation in R/make_2d_climatology_gridded.R
 \name{make_2d_climatology_gridded}
 \alias{make_2d_climatology_gridded}
-\title{Provides a gridded climatology based on a reference dates}
+\title{Calculates a gridded climatology from spatial data based on reference dates}
 \usage{
 make_2d_climatology_gridded(
   data.in,
-  write.out = F,
-  output.files,
-  shp.file,
   var.name,
-  area.names,
+  agg.time,
+  statistic,
   start.time,
   stop.time,
-  agg.time,
-  statistic
+  shp.file = NA,
+  area.names = NULL,
+  output.files = NULL,
+  write.out = FALSE
 )
 }
 \arguments{
-\item{data.in}{Either a character vector of full input file names for a list of spatRasters}
+\item{data.in}{character vector, list, or SpatRaster. Single file path, vector of file paths, single SpatRaster, or list of SpatRasters representing the data to be processed.}
 
-\item{write.out}{logical. If TRUE, will write a netCDF file with output.files. If FALSE will return a list of spatRasters}
+\item{var.name}{character. Variable name you wish to extract and process.}
 
-\item{output.files}{character vector of full output file name}
+\item{agg.time}{character. Time scale to calculate climatology over (e.g., "days", "doy", "months", or "years").}
 
-\item{shp.file}{string. Shape file you wish to crop each input file to}
+\item{statistic}{character. The statistic over which to calculate climatology (e.g., "mean", "max").}
 
-\item{var.name}{string. Variable name you wish to extract}
+\item{start.time}{numeric or character. The starting time value to filter the aggregated data.}
 
-\item{area.names}{character vector. Names of shape file areas you want to summarise}
+\item{stop.time}{numeric or character. The stopping time value to filter the aggregated data.}
 
-\item{start.time}{character. Either a date, year, julian day, or month corresponding to agg.time}
+\item{shp.file}{character, SpatVector, SpatRaster, or NA. Shapefile or raster to mask the input data to. Default is NA.}
 
-\item{stop.time}{character. Either a date, year, julian day, or month corresponding to agg.time}
+\item{area.names}{character vector or NULL. Names of shapefile areas you want to retain. Default is NULL.}
 
-\item{agg.time}{character. Time scale to calculate climatology over (days,doy, months, or years)}
+\item{output.files}{character vector or NULL. Full output file path(s) for the NetCDF file if write.out is TRUE. Default is NULL.}
 
-\item{statistic}{character. The statistic over which to calculate climatology from}
+\item{write.out}{logical. If TRUE, writes a netCDF file. If FALSE, returns a named list containing the climatology SpatRaster. Default is FALSE.}
 }
 \value{
-netCDF file with same time dimensions as input file
+If write.out is TRUE, writes a NetCDF file to disk. If FALSE, returns a named list containing the SpatRaster of the climatology.
 }
 \description{
-descriptions
+This function aggregates daily or periodic spatial data over a specified time scale (e.g., months) and calculates a summary statistic to establish a baseline climatology. It can optionally mask the data to specific shapefile regions before processing.
 }

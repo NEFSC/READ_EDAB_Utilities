@@ -2,48 +2,48 @@
 % Please edit documentation in R/make_2d_summary_gridded.R
 \name{make_2d_summary_gridded}
 \alias{make_2d_summary_gridded}
-\title{Provides summary statistics on 2d grid}
+\title{Calculates summary statistics on a 2D spatial grid}
 \usage{
 make_2d_summary_gridded(
   data.in,
-  write.out = F,
-  file.time = "annual",
-  output.files,
-  shp.file,
   var.name,
-  agg.time,
-  tz = NA,
   statistics,
-  touches = T,
-  area.names
+  agg.time,
+  file.time = "annual",
+  shp.file = NA,
+  area.names = NULL,
+  tz = NA,
+  touches = TRUE,
+  output.files = NULL,
+  write.out = FALSE
 )
 }
 \arguments{
-\item{data.in}{Either a character vector of full input file names for a list of spatRasters}
+\item{data.in}{character vector, list, or SpatRaster. Single file path, vector of file paths, single SpatRaster, or list of SpatRasters representing the spatial data to be processed.}
 
-\item{write.out}{logical. If TRUE, will write a netCDF file with output.files. If FALSE will return a list of spatRasters}
+\item{var.name}{character. Variable name you wish to extract and process.}
 
-\item{file.time}{string. What time scale the input files are on ('daily','monthly','annual')? Assumes all monthly or annual files are on a daily timestep}
+\item{statistics}{character vector. Which statistic(s) to calculate (e.g., c("mean", "max")).}
 
-\item{output.files}{character vector of full output file names corresponding to each input file}
+\item{agg.time}{character. Time scale to aggregate over (e.g., "days", "months", "years", "season").}
 
-\item{shp.file}{string. Shape file you wish to crop each input file to}
+\item{file.time}{character. Time scale of the input files ('daily', 'monthly', 'annual'). Default is 'annual'.}
 
-\item{var.name}{string. Variable name you wish to extract}
+\item{shp.file}{character, SpatVector, SpatRaster, or NA. Shapefile or raster to mask the input data to. Default is NA.}
 
-\item{agg.time}{string. Whether to aggregate over. Passed to terra::tapp (e.g. "days", "months", or "years", "season", etc.)}
+\item{area.names}{character vector or NULL. Names of shapefile areas you want to retain. Default is NULL.}
 
-\item{tz}{string. Time zone to convert. No correction if NA}
+\item{tz}{character or NA. Time zone to convert dates to. No correction if NA. Default is NA.}
 
-\item{statistics}{character vector. Which statistic to calculate}
+\item{touches}{logical. If TRUE, all cells touched by lines or polygons will be masked, not just those on the center point. Default is TRUE.}
 
-\item{touches}{logical. If TRUE, all cells touched by lines or polygons will be masked, not just those on the line render path, or whose center point is within the polygon}
+\item{output.files}{character vector or NULL. Full output file paths corresponding to each input file if write.out is TRUE. Default is NULL.}
 
-\item{area.names}{character vector. Names of shape file areas you want to summarise}
+\item{write.out}{logical. If TRUE, writes NetCDF files. If FALSE, returns a list of SpatRasterDatasets. Default is FALSE.}
 }
 \value{
-netCDF file with same time dimensions as input file
+If write.out is TRUE, writes NetCDF files to disk. If FALSE, returns a named list containing SpatRasterDatasets representing the summarized data.
 }
 \description{
-descriptions
+This function aggregates temporal spatial data (like daily rasters) into broader time periods (e.g., months, seasons) and calculates specified summary statistics. It can optionally mask the input to specific shapefile regions before summarization.
 }
