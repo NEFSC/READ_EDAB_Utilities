@@ -1,0 +1,80 @@
+# Calculates a gridded climatology from spatial data based on reference dates
+
+This function aggregates daily or periodic spatial data over a specified
+time scale (e.g., months) and calculates a summary statistic to
+establish a baseline climatology. It can optionally mask the data to
+specific shapefile regions before processing.
+
+## Usage
+
+``` r
+make_2d_climatology_gridded(
+  data.in,
+  var.name,
+  agg.time,
+  statistic,
+  start.time,
+  stop.time,
+  shp.file = NA,
+  area.names = NULL,
+  output.files = NULL,
+  write.out = FALSE
+)
+```
+
+## Arguments
+
+- data.in:
+
+  character vector, list, or SpatRaster. Single file path, vector of
+  file paths, single SpatRaster, or list of SpatRasters representing the
+  data to be processed.
+
+- var.name:
+
+  character. Variable name you wish to extract and process.
+
+- agg.time:
+
+  character. Time scale to calculate climatology over (e.g., "days",
+  "doy", "months", or "years").
+
+- statistic:
+
+  character. The statistic over which to calculate climatology (e.g.,
+  "mean", "max").
+
+- start.time:
+
+  numeric or character. The starting time value to filter the aggregated
+  data.
+
+- stop.time:
+
+  numeric or character. The stopping time value to filter the aggregated
+  data.
+
+- shp.file:
+
+  character, SpatVector, SpatRaster, or NA. Shapefile or raster to mask
+  the input data to. Default is NA.
+
+- area.names:
+
+  character vector or NULL. Names of shapefile areas you want to retain.
+  Default is NULL.
+
+- output.files:
+
+  character vector or NULL. Full output file path(s) for the NetCDF file
+  if write.out is TRUE. Default is NULL.
+
+- write.out:
+
+  logical. If TRUE, writes a netCDF file. If FALSE, returns a named list
+  containing the climatology SpatRaster. Default is FALSE.
+
+## Value
+
+If write.out is TRUE, writes a NetCDF file to disk. If FALSE, returns a
+named list containing the SpatRaster of the climatology.

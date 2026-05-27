@@ -1,0 +1,22 @@
+<urlset xmlns = 'http://www.sitemaps.org/schemas/sitemap/0.9'>
+<url><loc>https://nefsc.github.io/READ_EDAB_Utilities/404.html</loc></url>
+<url><loc>https://nefsc.github.io/READ_EDAB_Utilities/articles/2d_gridded.html</loc></url>
+<url><loc>https://nefsc.github.io/READ_EDAB_Utilities/articles/2d_timeseries.html</loc></url>
+<url><loc>https://nefsc.github.io/READ_EDAB_Utilities/articles/index.html</loc></url>
+<url><loc>https://nefsc.github.io/READ_EDAB_Utilities/authors.html</loc></url>
+<url><loc>https://nefsc.github.io/READ_EDAB_Utilities/index.html</loc></url>
+<url><loc>https://nefsc.github.io/READ_EDAB_Utilities/reference/convert_2d_longitude_gridded.html</loc></url>
+<url><loc>https://nefsc.github.io/READ_EDAB_Utilities/reference/crop_nc_2d.html</loc></url>
+<url><loc>https://nefsc.github.io/READ_EDAB_Utilities/reference/extract_daily_coord.html</loc></url>
+<url><loc>https://nefsc.github.io/READ_EDAB_Utilities/reference/index.html</loc></url>
+<url><loc>https://nefsc.github.io/READ_EDAB_Utilities/reference/make_2d_anomaly_gridded.html</loc></url>
+<url><loc>https://nefsc.github.io/READ_EDAB_Utilities/reference/make_2d_anomaly_ts.html</loc></url>
+<url><loc>https://nefsc.github.io/READ_EDAB_Utilities/reference/make_2d_climatology_gridded.html</loc></url>
+<url><loc>https://nefsc.github.io/READ_EDAB_Utilities/reference/make_2d_climatology_ts.html</loc></url>
+<url><loc>https://nefsc.github.io/READ_EDAB_Utilities/reference/make_2d_deg_day_gridded.html</loc></url>
+<url><loc>https://nefsc.github.io/READ_EDAB_Utilities/reference/make_2d_deg_day_ts.html</loc></url>
+<url><loc>https://nefsc.github.io/READ_EDAB_Utilities/reference/make_2d_summary_gridded.html</loc></url>
+<url><loc>https://nefsc.github.io/READ_EDAB_Utilities/reference/make_2d_summary_ts.html</loc></url>
+<url><loc>https://nefsc.github.io/READ_EDAB_Utilities/reference/mask_nc_2d.html</loc></url>
+</urlset>
+

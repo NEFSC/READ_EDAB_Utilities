@@ -1,0 +1,55 @@
+# Crops a 2D netCDF based on the extent of a shape file
+
+This function crops a 2D NetCDF file or SpatRaster to the spatial extent
+of a provided shapefile or specific zones within it. It standardizes
+inputs and can either return a list of cropped SpatRasters in memory or
+write them directly to new NetCDF files.
+
+## Usage
+
+``` r
+crop_nc_2d(
+  data.in,
+  shp.file,
+  var.name,
+  area.names = NA,
+  write.out = FALSE,
+  output.files = NULL
+)
+```
+
+## Arguments
+
+- data.in:
+
+  character vector, list, or SpatRaster. Single file path, vector of
+  file paths, single SpatRaster, or list of SpatRasters.
+
+- shp.file:
+
+  string, SpatVector, or SpatRaster. The shapefile or spatial object
+  used to crop the input data.
+
+- var.name:
+
+  string. Variable name you wish to extract.
+
+- area.names:
+
+  character vector. Optional names of specific areas within the
+  shapefile to filter by before cropping. Default is NA.
+
+- write.out:
+
+  logical. If TRUE, writes a netCDF file. If FALSE, returns a list of
+  SpatRasters. Default is FALSE.
+
+- output.files:
+
+  character vector. Full output file names corresponding to each input
+  file. Required if write.out is TRUE. Default is NULL.
+
+## Value
+
+A list of cropped SpatRasters if write.out is FALSE, or writes NetCDF
+files to disk if TRUE.
