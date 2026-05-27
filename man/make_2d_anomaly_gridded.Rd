@@ -15,7 +15,7 @@ make_2d_anomaly_gridded(
 )
 }
 \arguments{
-\item{data.in}{character vector, list, or SpatRaster. Single file path, vector of file paths, single SpatRaster, or list of SpatRasters representing the raw data.}
+\item{data.in}{character vector, list, SpatRaster, or SpatRasterDataset. Single file path, vector of file paths, single spatial object, or list of spatial objects representing the raw data.}
 
 \item{climatology}{string or SpatRaster. The reference climatology to subtract from the input data. Should ideally be on the same resolution as data.in.}
 
