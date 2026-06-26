@@ -20,16 +20,8 @@
 make_2d_summary_ts <- function(data.in, var.name, statistics, agg.time, file.time = 'annual', shp.file = NA, area.names = NULL, tz = NA, touches = TRUE, output.files = NULL, write.out = FALSE) {
   
   # Standardize data.in
-  if (inherits(data.in, "SpatRaster")) {
-    data.ls <- list(data.in)
-  } else if (is.character(data.in)) {
-    if (!all(file.exists(data.in))) stop("One or more paths in data.in do not exist.")
-    data.ls <- as.list(data.in)
-  } else if (is.list(data.in) && all(sapply(data.in, inherits, "SpatRaster"))) {
-    data.ls <- data.in
-  } else {
-    stop("data.in must be a file path, a vector of file paths, a single SpatRaster, or a list of SpatRasters.")
-  }
+  data.ls = EDABUtilities:::import_data(data.in)
+  
   
   # Standardize shp.file
   if (inherits(shp.file, c('SpatVector', 'SpatRaster'))) {

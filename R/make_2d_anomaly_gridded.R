@@ -16,21 +16,7 @@
 make_2d_anomaly_gridded <- function(data.in, climatology, var.name, shp.file = NA, area.names = NA, write.out = FALSE, output.files = NULL) {
   
   # --- Data Input Standardization ---
-  if (inherits(data.in, "SpatRaster")) {
-    data.ls <- list(data.in)
-  } else if (inherits(data.in, "SpatRasterDataset")) {
-    # Coerce single SpatRasterDataset to a multi-layer SpatRaster
-    data.ls <- list(terra::rast(data.in))
-  } else if (is.character(data.in)) {
-    data.ls <- as.list(data.in)
-  } else if (is.list(data.in) && all(sapply(data.in, function(x) inherits(x, c("SpatRaster", "SpatRasterDataset"))))) {
-    # Coerce any SpatRasterDatasets hidden in the list to SpatRasters
-    data.ls <- lapply(data.in, function(x) {
-      if (inherits(x, "SpatRasterDataset")) terra::rast(x) else x
-    })
-  } else {
-    stop("data.in must be a file path, a vector of file paths, a SpatRaster, a SpatRasterDataset, or a list of these.")
-  }
+  data.ls = EDABUtilities:::import_data(data.in)
   
   # --- Spatial Input Standardization ---
   if (inherits(shp.file, c("SpatVector", "SpatRaster"))) {
@@ -79,7 +65,10 @@ make_2d_anomaly_gridded <- function(data.in, climatology, var.name, shp.file = N
     if (is.character(data.ls[[i]])) {
       if (!file.exists(data.ls[[i]])) stop(sprintf("File does not exist: %s", data.ls[[i]]))
       data <- terra::rast(data.ls[[i]])
-    } else {
+    } else if(inherits(data.ls[[i]], 'SpatRasterDataset')){
+      is.sds = T
+      data = terra::as.list(data.ls[[i]])
+    }else {
       data <- data.ls[[i]]
     }
     
@@ -93,11 +82,16 @@ make_2d_anomaly_gridded <- function(data.in, climatology, var.name, shp.file = N
     }
     
     if (use.shp) {
+      
       data <- terra::mask(data, shp.vect)
     }
     
     # Calculate anomaly (NAs in the pre-masked climatology propagate automatically)
     data.anom <- data - climatology
+    
+    if(is.sds){
+      data = terra::sds(data)
+    }
     
     if (write.out) {
       if (is.null(output.files) || length(output.files) != length(data.ls)) {

@@ -12,15 +12,7 @@
 convert_2d_longitude_gridded <- function(data.in, write.out = FALSE, output.files = NA) {
   
   # 1. Standardized input coercion block
-  if (inherits(data.in, c("SpatRaster", "SpatVector"))) {
-    data.ls <- list(data.in)
-  } else if (is.character(data.in)) {
-    data.ls <- as.list(data.in)
-  } else if (is.list(data.in) && all(sapply(data.in, function(x) inherits(x, c("SpatRaster", "SpatVector"))))) {
-    data.ls <- data.in
-  } else {
-    stop("data.in must be a file path, a vector of file paths, a single SpatRaster/SpatVector, or a list of SpatRasters/SpatVectors.")
-  }
+  data.ls = EDABUtilities:::import_data(data.in)
   
   # 2. Early error catch for output file configuration
   if (write.out && (length(output.files) != length(data.ls) || all(is.na(output.files)))) {

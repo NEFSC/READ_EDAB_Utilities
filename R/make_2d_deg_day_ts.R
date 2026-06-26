@@ -18,16 +18,7 @@
 make_2d_deg_day_ts <- function(data.in, var.name, statistic, ref.value, type, shp.file = NA, area.names = NULL, output.files = NULL, write.out = FALSE) {
   
   # Standardize data.in
-  if (inherits(data.in, "SpatRaster")) {
-    data.ls <- list(data.in)
-  } else if (is.character(data.in)) {
-    if (!all(file.exists(data.in))) stop("One or more paths in data.in do not exist.")
-    data.ls <- as.list(data.in)
-  } else if (is.list(data.in) && all(sapply(data.in, inherits, "SpatRaster"))) {
-    data.ls <- data.in
-  } else {
-    stop("data.in must be a file path, a vector of file paths, a single SpatRaster, or a list of SpatRasters.")
-  }
+  data.ls = EDABUtilities:::import_data(data.in)
   
   # Standardize shp.file
   if (inherits(shp.file, c("SpatVector", "SpatRaster"))) {
@@ -41,7 +32,7 @@ make_2d_deg_day_ts <- function(data.in, var.name, statistic, ref.value, type, sh
     use.shp <- FALSE
   }
   
-  data.summary <- make_2d_summary_ts(data.in = data.ls,
+  data.summary <- EDABUtilities::make_2d_summary_ts(data.in = data.ls,
                                      write.out = FALSE,
                                      shp.file = shp.vect,
                                      var.name = var.name,
