@@ -1,6 +1,6 @@
 #' Calculates summary statistics of 2D gridded data as a time series by area
 #'
-#' This function extracts spatial raster data across specified shapefile regions and aggregates it temporally to produce timeseries summary statistics. It processes inputs by grouping them (e.g., aggregating daily layers into annual time series) and outputs either a list of summarized data frames or writes RDS files directly.
+#' This function extracts spatial raster data across specified shapefile regions and aggregates it temporally to produce timeseries summary statisticss. It processes inputs by grouping them (e.g., aggregating daily layers into annual time series) and outputs either a list of summarized data frames or writes RDS files directly.
 #'
 #' @param data.in character vector, list, or SpatRaster. Single file path, vector of file paths, single SpatRaster, or list of SpatRasters representing the spatial data.
 #' @param var.name character. Variable name you wish to extract.
@@ -75,6 +75,7 @@ make_2d_summary_ts <- function(data.in, var.name, statistics, agg.time, file.tim
     stop(paste0("Length mismatch: ", length(input_groups), " processing groups but ", length(output.files), " output files provided."))
   }
   
+  
   # MAIN LOOP
   for (i in seq_along(input_groups)) {
     
@@ -98,6 +99,10 @@ make_2d_summary_ts <- function(data.in, var.name, statistics, agg.time, file.tim
       }
     } else if (file.time == 'monthly') {
       stop('monthly files not yet implemented')
+    }
+    
+    if(terra::crs(data) != terra::crs(shp.vect)){
+      data = terra::project(data, terra::crs(shp.vect))
     }
     
     file.date <- terra::time(data)
@@ -126,7 +131,7 @@ make_2d_summary_ts <- function(data.in, var.name, statistics, agg.time, file.tim
       data <- terra::crop(data, shp.vect)
       
       # OPTIMIZATION: Pull terra::tapp entirely out of the area loop. 
-      # Execute once per statistic across the master clipped extent.
+      # Execute once per statistics across the master clipped extent.
       agg_master_ls <- list()
       for (s in seq_along(statistics)) {
         if (agg.time == 'season') {
@@ -136,6 +141,7 @@ make_2d_summary_ts <- function(data.in, var.name, statistics, agg.time, file.tim
         }
       }
       
+      
       all_area_results <- list()
       for (j in seq_along(area.names)) {
         
@@ -144,6 +150,8 @@ make_2d_summary_ts <- function(data.in, var.name, statistics, agg.time, file.tim
         
         for (s in seq_along(statistics)) {
           # OPTIMIZATION: We now merely crop/mask the ALREADY temporally-aggregated layer
+          
+          
           area.data <- terra::mask(terra::crop(agg_master_ls[[s]], area.poly), area.poly, touches = touches)
           stat_res <- terra::global(area.data, statistics[s], na.rm = TRUE)
           t.out <- if (agg.time == 'season') sort(unique(data.season)) else terra::time(agg_master_ls[[s]])
@@ -153,7 +161,7 @@ make_2d_summary_ts <- function(data.in, var.name, statistics, agg.time, file.tim
             agg.time = agg.time,
             ls.id = current_ls_id,
             var.name = var.name,
-            statistic = statistics[s],
+            statistics = statistics[s],
             area = area.names[j],
             value = stat_res[, 1]
           )
@@ -180,7 +188,7 @@ make_2d_summary_ts <- function(data.in, var.name, statistics, agg.time, file.tim
           agg.time = agg.time,
           ls.id = current_ls_id,
           var.name = var.name,
-          statistic = statistics[s],
+          statistics = statistics[s],
           area = NA,
           value = res[, 1]
         )

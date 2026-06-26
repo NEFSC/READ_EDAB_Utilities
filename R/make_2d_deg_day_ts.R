@@ -4,7 +4,7 @@
 #'
 #' @param data.in character vector, list, or SpatRaster. Single file path, vector of file paths, single SpatRaster, or list of SpatRasters representing the spatial data to be processed.
 #' @param var.name character. Variable name you wish to extract and process.
-#' @param statistic character. Which statistic to calculate ('dd' for degree days, 'nd' for number of days, 'nd.con' for max consecutive number of days).
+#' @param metric character. Which metric to calculate ('dd' for degree days, 'nd' for number of days, 'nd.con' for max consecutive number of days).
 #' @param ref.value numeric. Reference point value for the threshold.
 #' @param type character. How to use the reference point ('above', 'below', or 'raw').
 #' @param shp.file character, SpatVector, SpatRaster, or NA. Shapefile or raster to mask the input data to. Default is NA.
@@ -15,7 +15,7 @@
 #' @return If write.out is TRUE, writes RDS files to disk. If FALSE, returns a list of data.frames summarized by timestep and area.
 #' 
 #' @export
-make_2d_deg_day_ts <- function(data.in, var.name, statistic, ref.value, type, shp.file = NA, area.names = NULL, output.files = NULL, write.out = FALSE) {
+make_2d_deg_day_ts <- function(data.in, var.name, metric, ref.value, type, shp.file = NA, area.names = NULL, output.files = NULL, write.out = FALSE) {
   
   # Standardize data.in
   data.ls = EDABUtilities:::import_data(data.in)
@@ -37,7 +37,7 @@ make_2d_deg_day_ts <- function(data.in, var.name, statistic, ref.value, type, sh
                                      shp.file = shp.vect,
                                      var.name = var.name,
                                      agg.time = 'days',
-                                     statistic = 'mean',
+                                     statistics = 'mean',
                                      file.time = 'annual',
                                      area.names = area.names)
   
@@ -56,52 +56,52 @@ make_2d_deg_day_ts <- function(data.in, var.name, statistic, ref.value, type, sh
     stat_out <- summary_bound |>
       dplyr::group_by(ls.id, var.name, area) |>
       dplyr::summarise(value = sum(value, na.rm = TRUE), .groups = "drop") |>
-      dplyr::mutate(statistic = statistic)
+      dplyr::mutate(metric = metric)
     
   } else if (type == 'above') {
-    if (statistic == 'dd') {
+    if (metric == 'dd') {
       stat_out <- summary_bound |>
         dplyr::group_by(ls.id, var.name, area) |>
         dplyr::summarise(value = sum(value[value > ref.value], na.rm = TRUE), .groups = "drop") |>
-        dplyr::mutate(statistic = statistic)
+        dplyr::mutate(metric = metric)
       
-    } else if (statistic == 'nd') {
+    } else if (metric == 'nd') {
       stat_out <- summary_bound |>
         dplyr::group_by(ls.id, var.name, area) |>
         dplyr::summarise(value = sum(value > ref.value, na.rm = TRUE), .groups = "drop") |>
-        dplyr::mutate(statistic = statistic)
+        dplyr::mutate(metric = metric)
       
-    } else if (statistic == 'nd.con') {
+    } else if (metric == 'nd.con') {
       stat_out <- summary_bound |>
         dplyr::group_by(ls.id, var.name, area) |>
         dplyr::summarise(value = nd.con.fun(value > ref.value), .groups = "drop") |>
-        dplyr::mutate(statistic = statistic)
+        dplyr::mutate(metric = metric)
       
     } else {
-      stop('statistic needs to be "dd", "nd", or "nd.con"')
+      stop('metric needs to be "dd", "nd", or "nd.con"')
     }
     
   } else if (type == 'below') {
-    if (statistic == 'dd') {
+    if (metric == 'dd') {
       stat_out <- summary_bound |>
         dplyr::group_by(ls.id, var.name, area) |>
         dplyr::summarise(value = sum(value[value < ref.value], na.rm = TRUE), .groups = "drop") |>
-        dplyr::mutate(statistic = statistic)
+        dplyr::mutate(metric = metric)
       
-    } else if (statistic == 'nd') {
+    } else if (metric == 'nd') {
       stat_out <- summary_bound |>
         dplyr::group_by(ls.id, var.name, area) |>
         dplyr::summarise(value = sum(value < ref.value, na.rm = TRUE), .groups = "drop") |>
-        dplyr::mutate(statistic = statistic)
+        dplyr::mutate(metric = metric)
       
-    } else if (statistic == 'nd.con') {
+    } else if (metric == 'nd.con') {
       stat_out <- summary_bound |>
         dplyr::group_by(ls.id, var.name, area) |>
         dplyr::summarise(value = nd.con.fun(value < ref.value), .groups = "drop") |>
-        dplyr::mutate(statistic = statistic)
+        dplyr::mutate(metric = metric)
       
     } else {
-      stop('statistic needs to be "dd", "nd", or "nd.con"')
+      stop('metric needs to be "dd", "nd", or "nd.con"')
     }
   }
   

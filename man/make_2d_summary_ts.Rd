@@ -45,5 +45,5 @@ make_2d_summary_ts(
 If write.out is TRUE, writes RDS files to disk. If FALSE, returns a list of data frames summarized by timestep for each area.
 }
 \description{
-This function extracts spatial raster data across specified shapefile regions and aggregates it temporally to produce timeseries summary statistics. It processes inputs by grouping them (e.g., aggregating daily layers into annual time series) and outputs either a list of summarized data frames or writes RDS files directly.
+This function extracts spatial raster data across specified shapefile regions and aggregates it temporally to produce timeseries summary statisticss. It processes inputs by grouping them (e.g., aggregating daily layers into annual time series) and outputs either a list of summarized data frames or writes RDS files directly.
 }
