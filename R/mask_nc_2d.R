@@ -18,15 +18,7 @@
 mask_nc_2d <- function(data.in, var.name, min.value, max.value, write.out = FALSE, output.files = NULL, shp.file = NA, binary = FALSE, area.names = NA) {
   
   # --- Input Normalization ---
-  if (inherits(data.in, "SpatRaster")) {
-    data.ls <- list(data.in)
-  } else if (is.character(data.in)) {
-    data.ls <- as.list(data.in)
-  } else if (is.list(data.in) && all(sapply(data.in, inherits, "SpatRaster"))) {
-    data.ls <- data.in
-  } else {
-    stop("data.in must be a file path, a vector of file paths, a single SpatRaster, or a list of SpatRasters.")
-  }
+  data.ls = EDABUtilities:::import_data(data.in)
   
   # --- Output Directory Management ---
   if (write.out) {

@@ -16,18 +16,7 @@
 extract_daily_coord <- function(data.in, coord.df, var.name, search.radius = 0, statistics = "mean", write.out = FALSE, output.file = NULL) {
   
   # Data Input Standardization
-  if (inherits(data.in, "SpatRaster")) {
-    data.ls <- list(data.in)
-  } else if (is.character(data.in)) {
-    data.ls <- as.list(data.in)
-    if (!all(grepl('.nc', unlist(data.ls)))) {
-      stop("All input files must be netCDF (.nc) files.")
-    }
-  } else if (is.list(data.in) && all(sapply(data.in, inherits, "SpatRaster"))) {
-    data.ls <- data.in
-  } else {
-    stop("data.in must be a file path, a vector of file paths, a single SpatRaster, or a list of SpatRasters.")
-  }
+  data.ls = EDABUtilities:::import_data(data.in)
   
   # Ensure standard coordinate data structure
   if (!all(c("lat", "lon", "date") %in% names(coord.df))) {

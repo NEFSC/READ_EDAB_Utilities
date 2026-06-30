@@ -19,16 +19,7 @@
 make_2d_climatology_gridded <- function(data.in, var.name, agg.time, statistic, start.time, stop.time, shp.file = NA, area.names = NULL, output.files = NULL, write.out = FALSE) {
   
   # Standardize data.in and assert file existence early
-  if (inherits(data.in, "SpatRaster")) {
-    data.ls <- list(data.in)
-  } else if (is.character(data.in)) {
-    if (!all(file.exists(data.in))) stop("One or more paths in data.in do not exist.")
-    data.ls <- as.list(data.in)
-  } else if (is.list(data.in) && all(sapply(data.in, inherits, "SpatRaster"))) {
-    data.ls <- data.in
-  } else {
-    stop("data.in must be a file path, a vector of file paths, a single SpatRaster, or a list of SpatRasters.")
-  }
+  data.ls = EDABUtilities:::import_data(data.in)
   
   # Standardize shp.file
   if (inherits(shp.file, c("SpatVector", "SpatRaster"))) {

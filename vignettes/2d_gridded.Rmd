@@ -165,7 +165,7 @@ For studies evaluating threshold-based biological stressors (such as spatial exp
 Here, we calculate the gridded total number of days where Bottom Salinity was above `33` within the Georges Bank and Mid-Atlantic Bight regions.
 
 ```{R}
-data.nd <- make_2d_deg_day_gridded_nc(
+data.nd <- make_2d_deg_day_gridded(
   data.in = data.mask,
   write.out = FALSE,
   shp.file = epu.shp,
