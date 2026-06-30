@@ -20,5 +20,6 @@ VignetteBuilder: knitr
 Imports: 
     dplyr,
     terra,
-    magrittr
+    magrittr,
+    ggplot2
 URL: https://nefsc.github.io/READ_EDAB_Utilities/
