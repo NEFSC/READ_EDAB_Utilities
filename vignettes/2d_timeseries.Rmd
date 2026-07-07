@@ -164,7 +164,7 @@ Here, we calculate the number of days the Bottom Salinity was above `33`.
 data.nday <- make_2d_deg_day_ts(
   data.in = data.crop,
   var.name = "BottomS",
-  statistic = "nd",
+  metric = "nd",
   ref.value = 33,
   type = "above",
   shp.file = epu.shp,

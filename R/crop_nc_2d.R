@@ -18,15 +18,8 @@ crop_nc_2d <- function(data.in, shp.file, var.name, area.names = NA, write.out =
   data.ls = EDABUtilities:::import_data(data.in)
   
   # Spatial Input Standardization
-  if (inherits(shp.file, c("SpatVector", "SpatRaster"))) {
-    shp.vect <- shp.file
-    use.shp <- TRUE
-  } else if (is.character(shp.file) && length(shp.file) == 1 && !is.na(shp.file)) {
-    shp.vect <- terra::vect(shp.file)
-    use.shp <- TRUE
-  } else {
-    use.shp <- FALSE
-  }
+  shp.vect = EDABUtilities:::import_shp(shp.file)
+  use.shp = ifelse(class(shp.vect) == 'SpatVector',T,F)
   
   if (!use.shp) stop("A valid shp.file must be provided.")
   

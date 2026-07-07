@@ -21,16 +21,8 @@ make_2d_deg_day_ts <- function(data.in, var.name, metric, ref.value, type, shp.f
   data.ls = EDABUtilities:::import_data(data.in)
   
   # Standardize shp.file
-  if (inherits(shp.file, c("SpatVector", "SpatRaster"))) {
-    shp.vect <- shp.file
-    use.shp <- TRUE
-  } else if (is.character(shp.file) && length(shp.file) == 1 && !is.na(shp.file)) {
-    shp.vect <- terra::vect(shp.file)
-    use.shp <- TRUE
-  } else {
-    shp.vect <- NA
-    use.shp <- FALSE
-  }
+  shp.vect = EDABUtilities:::import_shp(shp.file)
+  use.shp = ifelse(class(shp.vect) == 'SpatVector',T,F)
   
   data.summary <- EDABUtilities::make_2d_summary_ts(data.in = data.ls,
                                      write.out = FALSE,

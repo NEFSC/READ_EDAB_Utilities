@@ -19,15 +19,9 @@ make_2d_anomaly_gridded <- function(data.in, climatology, var.name, shp.file = N
   data.ls = EDABUtilities:::import_data(data.in)
   
   # --- Spatial Input Standardization ---
-  if (inherits(shp.file, c("SpatVector", "SpatRaster"))) {
-    shp.vect <- shp.file
-    use.shp <- TRUE
-  } else if (is.character(shp.file) && length(shp.file) == 1 && !is.na(shp.file)) {
-    shp.vect <- terra::vect(shp.file)
-    use.shp <- TRUE
-  } else {
-    use.shp <- FALSE
-  }
+  shp.vect = EDABUtilities:::import_shp(shp.file)
+  use.shp = ifelse(class(shp.vect) == 'SpatVector',T,F)
+  
   
   # --- Climatology Standardization ---
   if (is.character(climatology)) {
