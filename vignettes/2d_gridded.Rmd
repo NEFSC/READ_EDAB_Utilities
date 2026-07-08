@@ -170,7 +170,7 @@ data.nd <- make_2d_deg_day_gridded(
   write.out = FALSE,
   shp.file = epu.shp,
   var.name = "BottomS",
-  statistic = "nd",
+  metric = "nd",
   ref.value = 33,
   type = "above",
   area.names = c("MAB", "GB")

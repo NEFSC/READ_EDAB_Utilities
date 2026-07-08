@@ -4,7 +4,7 @@
 #'
 #' @param data.in character vector, list, or SpatRaster. Single file path, vector of file paths, single SpatRaster, or list of SpatRasters representing the data to be processed.
 #' @param var.name character. Variable name you wish to extract and process.
-#' @param statistic character. Which statistic to calculate ('dd' for degree days, 'nd' for number of days, 'nd.con' for max consecutive number of days).
+#' @param metric character. Which metric to calculate ('dd' for degree days, 'nd' for number of days, 'nd.con' for max consecutive number of days).
 #' @param ref.value numeric. Reference point value for the threshold.
 #' @param type character. How to use the reference point ('above', 'below', or 'raw').
 #' @param shp.file character, SpatVector, SpatRaster, or NA. Shapefile or raster to mask the input data to. Default is NA.
@@ -15,21 +15,14 @@
 #' @return If write.out is TRUE, writes a NetCDF file with the same spatial dimensions as the input file. If FALSE, returns a named list of SpatRasters. 
 #' 
 #' @export
-make_2d_deg_day_gridded <- function(data.in, var.name, statistic, ref.value, type, shp.file = NA, area.names = NULL, output.files = NULL, write.out = FALSE) {
+make_2d_deg_day_gridded <- function(data.in, var.name, metric, ref.value, type, shp.file = NA, area.names = NULL, output.files = NULL, write.out = FALSE) {
   
   # Standardize data.in and verify files
   data.ls = EDABUtilities:::import_data(data.in)
   
   # Standardize shp.file
-  if (inherits(shp.file, c("SpatVector", "SpatRaster"))) {
-    shp.vect <- shp.file
-    use.shp <- TRUE
-  } else if (is.character(shp.file) && length(shp.file) == 1 && !is.na(shp.file)) {
-    shp.vect <- terra::vect(shp.file)
-    use.shp <- TRUE
-  } else {
-    use.shp <- FALSE
-  }
+  shp.vect = EDABUtilities:::import_shp(shp.file)
+  use.shp = ifelse(class(shp.vect) == 'SpatVector',T,F)
   
   # Robust filtering for area.names
   if (use.shp && !is.null(area.names) && !all(is.na(area.names))) {
@@ -60,15 +53,15 @@ make_2d_deg_day_gridded <- function(data.in, var.name, statistic, ref.value, typ
       data.stat <- sum(data, na.rm = TRUE)
       
     } else if (type == 'above') {
-      if (statistic == 'dd') {
+      if (metric == 'dd') {
         data.temp <- terra::clamp(data, lower = ref.value, upper = Inf, value = FALSE)
         data.stat <- sum(data.temp, na.rm = TRUE)
         
-      } else if (statistic == 'nd') {
+      } else if (metric == 'nd') {
         # OPTIMIZATION: Native terra boolean mapping instead of clamp manipulation
         data.stat <- sum(data > ref.value, na.rm = TRUE)
         
-      } else if (statistic == 'nd.con') {
+      } else if (metric == 'nd.con') {
         data.temp <- data > ref.value
         data.stat <- terra::app(data.temp, fun = function(x) {
           l <- rle(as.vector(x))
@@ -76,18 +69,18 @@ make_2d_deg_day_gridded <- function(data.in, var.name, statistic, ref.value, typ
           return(if (length(m) == 0) 0 else max(m, na.rm = TRUE))
         })
       } else {
-        stop('statistic needs to be "dd", "nd", or "nd.con"')
+        stop('metric needs to be "dd", "nd", or "nd.con"')
       }
       
     } else if (type == 'below') {
-      if (statistic == 'dd') {
+      if (metric == 'dd') {
         data.temp <- terra::clamp(data, lower = -Inf, upper = ref.value, value = FALSE)
         data.stat <- sum(data.temp, na.rm = TRUE)
         
-      } else if (statistic == 'nd') {
+      } else if (metric == 'nd') {
         data.stat <- sum(data < ref.value, na.rm = TRUE)
         
-      } else if (statistic == 'nd.con') {
+      } else if (metric == 'nd.con') {
         data.temp <- data < ref.value
         data.stat <- terra::app(data.temp, fun = function(x) {
           l <- rle(as.vector(x))
@@ -95,7 +88,7 @@ make_2d_deg_day_gridded <- function(data.in, var.name, statistic, ref.value, typ
           return(if (length(m) == 0) 0 else max(m, na.rm = TRUE))
         })
       } else {
-        stop('statistic needs to be "dd", "nd", or "nd.con"')
+        stop('metric needs to be "dd", "nd", or "nd.con"')
       }
     }
     
@@ -112,7 +105,7 @@ make_2d_deg_day_gridded <- function(data.in, var.name, statistic, ref.value, typ
       out_dir <- dirname(output.files[i])
       if (!dir.exists(out_dir)) dir.create(out_dir, recursive = TRUE)
       
-      terra::writeCDF(data.out, output.files[i], varname = paste0(var.name, '_', type, '_', ref.value, '_', statistic), overwrite = TRUE)
+      terra::writeCDF(data.out, output.files[i], varname = paste0(var.name, '_', type, '_', ref.value, '_', metric), overwrite = TRUE)
     } else {
       out.ls[[i]] <- data.out
       if (is.character(data.ls[[i]])) {

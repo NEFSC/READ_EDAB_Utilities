@@ -7,7 +7,7 @@
 make_2d_deg_day_gridded(
   data.in,
   var.name,
-  statistic,
+  metric,
   ref.value,
   type,
   shp.file = NA,
@@ -21,7 +21,7 @@ make_2d_deg_day_gridded(
 
 \item{var.name}{character. Variable name you wish to extract and process.}
 
-\item{statistic}{character. Which statistic to calculate ('dd' for degree days, 'nd' for number of days, 'nd.con' for max consecutive number of days).}
+\item{metric}{character. Which metric to calculate ('dd' for degree days, 'nd' for number of days, 'nd.con' for max consecutive number of days).}
 
 \item{ref.value}{numeric. Reference point value for the threshold.}
 
