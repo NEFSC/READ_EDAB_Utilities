@@ -55,7 +55,7 @@ make_2d_deg_day_gridded <- function(data.in, var.name, metric, ref.value, type, 
     } else if (type == 'above') {
       if (metric == 'dd') {
         data.temp <- terra::clamp(data, lower = ref.value, upper = Inf, value = FALSE)
-        data.stat <- sum(data.temp, na.rm = TRUE)
+        data.stat <- sum(data.temp- ref.value, na.rm = TRUE)
         
       } else if (metric == 'nd') {
         # OPTIMIZATION: Native terra boolean mapping instead of clamp manipulation

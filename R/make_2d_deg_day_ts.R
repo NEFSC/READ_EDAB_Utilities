@@ -54,7 +54,7 @@ make_2d_deg_day_ts <- function(data.in, var.name, metric, ref.value, type, shp.f
     if (metric == 'dd') {
       stat_out <- summary_bound |>
         dplyr::group_by(ls.id, var.name, area) |>
-        dplyr::summarise(value = sum(value[value > ref.value], na.rm = TRUE), .groups = "drop") |>
+        dplyr::summarise(value = sum(value[value > ref.value]- ref.value, na.rm = TRUE), .groups = "drop") |>
         dplyr::mutate(metric = metric)
       
     } else if (metric == 'nd') {
