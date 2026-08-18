@@ -53,6 +53,11 @@ max.S <- 34
 
 ```
 
+```{r}
+data.start = terra::rast( system.file("data", "GLORYS_daily_BottomSalinity_2019.nc", package = "EDABUtilities"))
+data.start = terra::subset(data.start,1)
+terra::plot(data.start,  main = "Original Gridded Extent")
+```
 ## Step 1: Spatial Cropping
 
 We crop the multi-layer input NetCDF files down to the bounding box of the shapefile. This reduces the footprint of the spatial grids in memory and increases processing speeds for all downstream steps.
@@ -69,8 +74,9 @@ data.crop <- crop_nc_2d(
   write.out = FALSE
 )
 
+data.plot = terra::subset(data.crop[[1]],1)
 # Plot the cropped daily spatial layer
-terra::plot(data.crop[[1]], main = "Cropped Gridded Extent (Layer 1)")
+terra::plot(data.plot, main = "Cropped Gridded Extent (Layer 1)")
 ```
 
 ## Step 2: Masking and Quality Control
@@ -91,7 +97,8 @@ data.mask <- mask_nc_2d(
 )
 
 # Plot the masked result
-terra::plot(data.mask[[1]], main = "Masked and Thresholded Grid")
+data.plot = terra::subset(data.mask[[1]],1)
+terra::plot(data.plot, main = "Masked and Thresholded Grid")
 ```
 
 ## Step 3: Temporal Aggregation to Gridded Summaries
@@ -112,7 +119,7 @@ data.summary <- make_2d_summary_gridded(
 
 #Pull just the top layer from data.summary for plotting
 plot.data = terra::rast(data.summary[[1]])
-
+# plot.data = terra::subset(plot.data,1)
 # Plot the monthly gridded summary
 terra::plot(plot.data, main = "Monthly Mean Salinity Grid")
 ```

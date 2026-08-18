@@ -103,11 +103,12 @@ data.ts = make_2d_summary_ts(data.in = data.mask,
                            write.out = F)
 
 # Combine the list of dataframes for plotting
-ts_all <- dplyr::bind_rows(data.ts)
+ts_all <- dplyr::bind_rows(data.ts) |> 
+  dplyr::rename(file.id = 'ls.id')
 
-ggplot(ts_all, aes(x = time, y = value,color = factor(ls.id))) +
+ggplot(ts_all, aes(x = time, y = value,color = area)) +
   geom_line() +
-  facet_wrap(~area) +
+  facet_wrap(~file.id, ncol =1,labeller =label_both) +
   theme_minimal() +
   labs(title = "Monthly Mean Bottom Salinity by Region")
 
@@ -120,16 +121,17 @@ Using the aggregated tabular data, we establish a baseline climatology. In this 
 ```{R}
 clim.ts <- make_2d_climatology_ts(
   data.in = data.ts,
-  start.time = 6,
-  stop.time = 8,
+  start.time = 1,
+  stop.time = 12,
   statistic = "mean",
   write.out = FALSE
 )
 
-ggplot(clim.ts[[1]], aes(x = time, y = value, fill = area)) +
-  geom_bar(linewidth = 1,stat = 'identity',position = 'dodge') +
+ggplot(clim.ts[[1]], aes(x = time, y = value, color = area)) +
+  # geom_bar(linewidth = 1,stat = 'identity',position = 'dodge') +
+  geom_line()+
   theme_minimal() +
-  labs(title = "Summer Climatology Baseline")
+  labs(title = "Monthly Climatology Baseline")
   
 ```
 
