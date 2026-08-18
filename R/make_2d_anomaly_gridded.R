@@ -49,7 +49,7 @@ make_2d_anomaly_gridded <- function(data.in, climatology, var.name, shp.file = N
     }
     
     # Pre-mask climatology once to avoid doing it N times inside the loop
-    climatology <- terra::mask(climatology[[1]], shp.vect)
+    climatology <- EDABUtilities::crop_nc_2d(climatology[[1]], shp.file = shp.vect,area.names = area.names,var.name = var.name  )[[1]]
   }
   
   out.ls <- list()
@@ -70,7 +70,7 @@ make_2d_anomaly_gridded <- function(data.in, climatology, var.name, shp.file = N
     
     # Align extents and resolutions if mismatched
     if (!(all(terra::res(data) == terra::res(climatology)) && all(terra::ext(data) == terra::ext(climatology)))) {
-      climatology <- terra::crop(climatology,data)
+      climatology <- terra::crop(climatology[[1]],data)
       data <- terra::crop(terra::mask(data, climatology), climatology)
       data <- terra::resample(data, climatology)
     }
