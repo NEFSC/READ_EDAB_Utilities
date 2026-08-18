@@ -85,7 +85,6 @@ make_2d_deg_day_ts <- function(data.in, var.name, metric, ref.value, type, shp.f
           .groups = "drop"
         ) |>
         dplyr::mutate(metric = metric)
-      
     } else if (metric == 'nd') {
       stat_out <- summary_bound |>
         dplyr::group_by(ls.id, var.name, area) |>
