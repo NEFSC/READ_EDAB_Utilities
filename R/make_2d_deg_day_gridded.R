@@ -75,7 +75,7 @@ make_2d_deg_day_gridded <- function(data.in, var.name, metric, ref.value, type, 
     } else if (type == 'below') {
       if (metric == 'dd') {
         data.temp <- terra::clamp(data, lower = -Inf, upper = ref.value, value = FALSE)
-        data.stat <- sum(data.temp, na.rm = TRUE)
+        data.stat <- sum(data.temp- ref.value, na.rm = TRUE)
         
       } else if (metric == 'nd') {
         data.stat <- sum(data < ref.value, na.rm = TRUE)
