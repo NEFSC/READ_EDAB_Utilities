@@ -52,6 +52,13 @@ crop_nc_2d <- function(data.in, shp.file, var.name, area.names = NA, write.out =
     } else {
       data.orig <- data.ls[[i]] 
     }
+    #Check CRS
+    data.crs = terra::crs(data.orig)
+    shp.crs = terra::crs(shp.vect)
+    
+    if(!identical(data.crs,shp.crs)){
+      shp.vect = terra::project(shp.vect,data.crs)
+    }
     
     # ---------------------------------------------------------
     # 1. Fast Vector Shift (Align Shapefile to Raster)
@@ -62,11 +69,11 @@ crop_nc_2d <- function(data.in, shp.file, var.name, area.names = NA, write.out =
     # If raster is 0-360 but shapefile has negative longitudes
     if (e_rast["xmax"] > 180.001 && any(terra::ext(shp_crop)[1:2] < 0)) {
       # Shift the shapefile geometry 360 degrees East so it overlays on the 0-360 raster
-      shp_crop <- terra::shift(shp_crop, dx = 360)
+      shp_crop <- terra::rotate(shp_crop, long = 0,split = T, left = F)
       #If raster is -180 to 180 but shapefile is 0-360
     } else if (e_rast["xmax"] <= 180.001 && any(terra::ext(shp_crop)[1:2] > 180)) {
       # Shift the shapefile geometry 360 degrees West
-      shp_crop <- terra::shift(shp_crop, dx = -360)
+      shp_crop <- terra::rotate(shp_crop)
     }
     
     # ---------------------------------------------------------
