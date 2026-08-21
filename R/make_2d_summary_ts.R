@@ -94,6 +94,7 @@ make_2d_summary_ts <- function(data.in, var.name, statistics, agg.time, file.tim
       stop('monthly files not yet implemented')
     }
     
+
     if(terra::crs(data) != terra::crs(shp.vect)){
       data = terra::project(data, terra::crs(shp.vect))
     }
@@ -121,7 +122,7 @@ make_2d_summary_ts <- function(data.in, var.name, statistics, agg.time, file.tim
       }
       
       # OPTIMIZATION: Crop immediately to shapefile bounding box before ANY iterations
-      data <- terra::crop(data, shp.vect)
+      data <- EDABUtilities::crop_nc_2d(data, shp.vect)[[1]]
       
       # OPTIMIZATION: Pull terra::tapp entirely out of the area loop. 
       # Execute once per statistics across the master clipped extent.

@@ -72,7 +72,8 @@ make_2d_summary_gridded <- function(data.in, var.name, statistics, agg.time, fil
     
     # OPTIMIZATION: Pre-crop to bounding box once to reduce spatial memory footprint immediately
     if (use.shp) {
-      data <- terra::crop(data, shp.vect)
+      data <- EDABUtilities::crop_nc_2d(data, shp.file = shp.vect,area.names = area.names,var.name = var.name  )[[1]]
+      # data <- terra::crop(data, shp.vect)
     }
     
     data.stat.ls <- list()
