@@ -94,6 +94,7 @@ make_2d_summary_ts <- function(data.in, var.name, statistics, agg.time, file.tim
       stop('monthly files not yet implemented')
     }
     
+
     if(terra::crs(data) != terra::crs(shp.vect)){
       data = terra::project(data, terra::crs(shp.vect))
     }
