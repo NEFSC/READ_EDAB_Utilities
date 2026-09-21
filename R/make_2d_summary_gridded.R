@@ -42,7 +42,7 @@ make_2d_summary_gridded <- function(data.in, var.name, statistics, agg.time, fil
       # Use terra to safely stack character string raster sources
       data_stack <- terra::rast(unlist(data.ls))
       # Extract time as a fallback if NC files don't possess native time layers
-      file_dates <- suppressWarnings(as.Date(gsub('.*_([0-9]{4})-([0-9]{2})-([0-9]{2}).*', '\\1-\\2-\\3', unlist(data.ls))))
+      file_dates <- suppressWarnings(as.Date(gsub(".*(\\d{4})-?(\\d{2})-?(\\d{2}).*", "\\1-\\2-\\3", unlist(data.ls))))
       if (!any(is.na(file_dates))) terra::time(data_stack) <- file_dates
     } else {
       data_stack <- terra::rast(data.ls)

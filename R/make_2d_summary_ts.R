@@ -20,7 +20,7 @@
 make_2d_summary_ts <- function(data.in, var.name, statistics, agg.time, file.time = 'annual', shp.file = NA, area.names = NULL, tz = NA, touches = TRUE, output.files = NULL, write.out = FALSE) {
   
   # Standardize data.in
-  data.ls = EDABUtilities:::import_data(data.in)
+  data.ls = EDABUtilities:::import_data(data.in, var.name = var.name)
   
   
   # Standardize shp.file
@@ -35,9 +35,9 @@ make_2d_summary_ts <- function(data.in, var.name, statistics, agg.time, file.tim
   
   if (file.time == 'daily') {
     if (all(sapply(data.ls, is.character))) {
-      file_dates <- suppressWarnings(as.Date(gsub(".*(\\d{4})-(\\d{2})-(\\d{2}).*", "\\1-\\2-\\3", unlist(data.ls))))
+      file_dates <- suppressWarnings(as.Date(gsub(".*(\\d{4})-?(\\d{2})-?(\\d{2}).*", "\\1-\\2-\\3", unlist(data.ls))))
     } else {
-      file_dates <- as.Date(sapply(data.ls, function(x) terra::time(x)[1]))
+      file_dates <- do.call(c, lapply(data.ls, function(x) terra::time(x)[1]))
     }
     
     if (any(is.na(file_dates))) stop("Could not parse dates from data.in to group by year.")
@@ -82,12 +82,12 @@ make_2d_summary_ts <- function(data.in, var.name, statistics, agg.time, file.tim
       if (all(sapply(data.ls, is.character))) {
         files_to_load <- unlist(data.ls)[current_indices]
         data <- terra::rast(files_to_load)
-        dates_subset <- suppressWarnings(as.Date(gsub(".*(\\d{4})-(\\d{2})-(\\d{2}).*", "\\1-\\2-\\3", files_to_load)))
+        dates_subset <- suppressWarnings(as.Date(gsub(".*(\\d{4})-?(\\d{2})-?(\\d{2}).*", "\\1-\\2-\\3", files_to_load)))
         terra::time(data) <- dates_subset
       } else {
         r_list <- data.ls[current_indices]
         data <- terra::rast(r_list)
-        dates_subset <- as.Date(sapply(r_list, function(x) terra::time(x)))
+        dates_subset <- do.call(c, lapply(r_list, function(x) terra::time(x)[1]))
         terra::time(data) <- dates_subset
       }
     } else if (file.time == 'monthly') {
@@ -95,9 +95,9 @@ make_2d_summary_ts <- function(data.in, var.name, statistics, agg.time, file.tim
     }
     
 
-    if(terra::crs(data) != terra::crs(shp.vect)){
-      data = terra::project(data, terra::crs(shp.vect))
-    }
+    # if(terra::crs(data) != terra::crs(shp.vect)){
+    #   data2 = terra::project(data, terra::crs(shp.vect))
+    # }
     
     file.date <- terra::time(data)
     if (!is.na(tz)) {
@@ -122,7 +122,7 @@ make_2d_summary_ts <- function(data.in, var.name, statistics, agg.time, file.tim
       }
       
       # OPTIMIZATION: Crop immediately to shapefile bounding box before ANY iterations
-      data <- EDABUtilities::crop_nc_2d(data, shp.vect)[[1]]
+      data <- EDABUtilities::crop_nc_2d(data, shp.vect,var.name = var.name)[[1]]
       
       # OPTIMIZATION: Pull terra::tapp entirely out of the area loop. 
       # Execute once per statistics across the master clipped extent.

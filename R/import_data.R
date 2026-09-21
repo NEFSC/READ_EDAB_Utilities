@@ -27,20 +27,21 @@ import_data = function(data.in, var.name = NULL){
   if(!is.null(var.name)){
     data.ls = lapply(data.ls,function(x){
       data.varname = terra::varnames(x)
-      if(length(data.varname > 1)){
+      if(length(data.varname) > 1){
         data = x[[terra::varnames(x) == var.name]]
       }else{
         
-        data.names = terra::names(data)
+        data.names = terra::names(x)
         data.names = data.names[grepl(var.name,data.names)]
         
         if(length(data.names) ==0){
           warning('NetCDF file does not contain any fields with var.name=',var.name)
         }else{
           
-          data = subset(x,data.names)
+          data = terra::subset(x,data.names)
         }
       }
+      return(data)
     })
   }
   
