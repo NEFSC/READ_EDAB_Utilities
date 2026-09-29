@@ -63,7 +63,8 @@ make_2d_climatology_gridded <- function(data.in, var.name, agg.time, statistic, 
     
     # 3. OPTIMIZATION: Mask significantly fewer aggregated subset layers
     if (use.shp) {
-      data.subset <- terra::mask(data.subset, shp.vect)
+      
+      data.subset <- EDABUtilities::crop_nc_2d(data.subset, shp.vect)[[1]]
     }
     
     data.time.agg.ls[[i]] <- data.subset

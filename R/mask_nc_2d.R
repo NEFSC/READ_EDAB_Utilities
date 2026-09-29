@@ -62,7 +62,8 @@ mask_nc_2d <- function(data.in, var.name, min.value, max.value, write.out = FALS
     data <- if (is.character(item)) terra::rast(item) else item
     
     if (use.shp) {
-      data <- terra::crop(data, shp.vect)
+      data <- EDABUtilities::crop_nc_2d(data, shp.file = shp.vect,area.names = area.names,var.name = var.name  )[[1]]
+      # data <- terra::crop(data, shp.vect)
       data <- terra::mask(data, shp.vect) 
     }
     

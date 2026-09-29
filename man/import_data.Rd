@@ -4,10 +4,12 @@
 \alias{import_data}
 \title{Imports data objects of various types and returns a spatRaster list for other functions}
 \usage{
-import_data(data.in)
+import_data(data.in, var.name = NULL)
 }
 \arguments{
 \item{data.in}{character vector, list, or SpatRaster. Single file path, vector of file paths, single SpatRaster, or list of SpatRasters representing the spatial data.}
+
+\item{var.name}{character. Name of variable to be subseted from dataset}
 }
 \value{
 list of spatRasters
