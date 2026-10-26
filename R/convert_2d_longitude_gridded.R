@@ -11,6 +11,9 @@
 #' @export
 convert_2d_longitude_gridded <- function(data.in, write.out = FALSE, output.files = NA) {
   
+  # Boost terra memory limit for in-memory processing fallback
+  terra::terraOptions(memfrac = 0.8)
+  
   # 1. Standardized input coercion block
   data.ls = EDABUtilities:::import_data(data.in)
   
@@ -23,18 +26,59 @@ convert_2d_longitude_gridded <- function(data.in, write.out = FALSE, output.file
   out.ls <- lapply(seq_along(data.ls), function(i) {
     
     current_data <- data.ls[[i]]
+    is_file_input <- is.character(current_data)
     
-    # Safe coercion with file validation
-    if (is.character(current_data)) {
+    # Fast path: File-to-file transformation via GDAL (only for rasters written to disk)
+    if (is_file_input && write.out) {
+      if (!file.exists(current_data)) stop(paste("File does not exist:", current_data))
+      
+      # Quickly read extent without loading data into memory
+      temp_rast <- terra::rast(current_data)
+      dat.ext <- terra::ext(temp_rast)
+      
+      out_dir <- dirname(output.files[i])
+      if (!dir.exists(out_dir)) dir.create(out_dir, recursive = TRUE)
+      
+      if (dat.ext[1] >= -0.001 && dat.ext[2] <= 360.001 && dat.ext[2] > 180.001) {
+        message("Detected longitude range approx 0-360. Fast processing via GDAL warp...")
+        
+        # Perform fast GDAL extent shift
+        sf::gdal_utils(
+          util = "warp",
+          source = current_data,
+          destination = output.files[i],
+          options = c(
+            "-t_srs", "EPSG:4326", 
+            "-te", "-180", "-90", "180", "90", 
+            "-wo", "SOURCE_EXTRA=1000", 
+            "--config", "CENTER_LONG", "0"
+          )
+        )
+        return(terra::rast(output.files[i]))
+        
+      } else if (!(dat.ext[1] >= -180.001 && dat.ext[2] <= 180.001)) {
+        stop("Longitude out of range. Extent is outside expected boundaries.")
+      } else {
+        message("Already standard format (-180:180). Copying file.")
+        file.copy(current_data, output.files[i], overwrite = TRUE)
+        return(terra::rast(output.files[i]))
+      }
+    }
+    
+    # ---------------------------------------------------------
+    # Fallback path: In-memory terra processing
+    # (used if input is already an object, or write.out is FALSE)
+    # ---------------------------------------------------------
+    
+    if (is_file_input) {
       if (!file.exists(current_data)) stop(paste("File does not exist:", current_data))
       current_data <- current_data |> terra::rast()
     }
     
     dat.ext <- current_data |> terra::ext()
     
-    # Spatial logic checks without redundant variables
     if (dat.ext[1] >= -0.001 && dat.ext[2] <= 360.001 && dat.ext[2] > 180.001) {
-      message("Detected longitude range approximately 0-360. Converting to -180 to +180.")
+      message("Detected longitude range approx 0-360. Converting to -180 to +180 via terra::rotate.")
       
       if (!terra::is.lonlat(current_data)) {
         warning("Object does not have a standard geographic (lat/lon) CRS. Rotation may fail or shift bounds unexpectedly.")

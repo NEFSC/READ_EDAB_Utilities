@@ -97,7 +97,7 @@ make_2d_deg_day_gridded <- function(data.in, var.name, metric, ref.value, type, 
     
     # OPTIMIZATION: Apply spatial mask on the final single aggregated layer
     if (use.shp) {
-      data.out <- terra::mask(data.out, shp.vect)
+      data.out <- EDABUtilities::crop_nc_2d(data.out, shp.vect)[[1]]
     }
     
     if (write.out) {
