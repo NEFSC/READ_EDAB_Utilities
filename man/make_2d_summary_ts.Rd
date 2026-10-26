@@ -7,7 +7,8 @@
 make_2d_summary_ts(
   data.in,
   var.name,
-  statistics,
+  statistics.spatial,
+  statistic.temporal,
   agg.time,
   file.time = "annual",
   shp.file = NA,
@@ -23,7 +24,9 @@ make_2d_summary_ts(
 
 \item{var.name}{character. Variable name you wish to extract.}
 
-\item{statistics}{character vector. Which statistic(s) to calculate (e.g., c("mean", "max")).}
+\item{statistics.spatial}{character vector. Which statistic(s) to calculate over space (e.g., c("mean", "max")).}
+
+\item{statistic.temporal}{character. Which single statistic to calculate over time (e.g., c("mean", "max")).}
 
 \item{agg.time}{character. Time scale to calculate aggregation over (e.g., "days", "months", "season", "years").}
 

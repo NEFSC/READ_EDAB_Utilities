@@ -4,7 +4,8 @@
 #'
 #' @param data.in character vector, list, or SpatRaster. Single file path, vector of file paths, single SpatRaster, or list of SpatRasters representing the spatial data.
 #' @param var.name character. Variable name you wish to extract.
-#' @param statistics character vector. Which statistic(s) to calculate (e.g., c("mean", "max")).
+#' @param statistics.spatial character vector. Which statistic(s) to calculate over space (e.g., c("mean", "max")).
+#' @param statistic.temporal character. Which single statistic to calculate over time (e.g., c("mean", "max")).
 #' @param agg.time character. Time scale to calculate aggregation over (e.g., "days", "months", "season", "years").
 #' @param file.time character. What time scale the input files are on ('daily', 'monthly', 'annual'). Default is 'annual'.
 #' @param shp.file character, SpatVector, SpatRaster, or NA. Shapefile or raster to mask the input data to. Default is NA.
@@ -20,7 +21,8 @@
 make_2d_summary_ts <- function(
   data.in,
   var.name,
-  statistics,
+  statistics.spatial,
+  statistic.temporal,
   agg.time,
   file.time = 'annual',
   shp.file = NA,
@@ -161,21 +163,18 @@ make_2d_summary_ts <- function(
 
       # OPTIMIZATION: Pull terra::tapp entirely out of the area loop.
       # Execute once per statistics across the master clipped extent.
-      agg_master_ls <- list()
-      for (s in seq_along(statistics)) {
-        if (agg.time == 'season') {
-          agg_master_ls[[s]] <- terra::tapp(
-            data,
-            fun = statistics[s],
-            index = data.season
-          )
-        } else {
-          agg_master_ls[[s]] <- terra::tapp(
-            data,
-            fun = statistics[s],
-            index = agg.time
-          )
-        }
+      if (agg.time == 'season') {
+        agg_master_ls <- terra::tapp(
+          data,
+          fun = statistic.temporal,
+          index = data.season
+        )
+      } else {
+        agg_master_ls <- terra::tapp(
+          data,
+          fun = statistic.temporal,
+          index = agg.time
+        )
       }
 
       all_area_results <- list()
@@ -183,19 +182,23 @@ make_2d_summary_ts <- function(
         area.poly <- shp.vect[which.area[j], ]
         stat_results_list <- list()
 
-        for (s in seq_along(statistics)) {
+        for (s in seq_along(statistics.spatial)) {
           # OPTIMIZATION: We now merely crop/mask the ALREADY temporally-aggregated layer
 
           area.data <- terra::mask(
-            terra::crop(agg_master_ls[[s]], area.poly),
+            terra::crop(agg_master_ls, area.poly),
             area.poly,
             touches = touches
           )
-          stat_res <- terra::global(area.data, statistics[s], na.rm = TRUE)
+          stat_res <- terra::global(
+            area.data,
+            statistics.spatial[s],
+            na.rm = TRUE
+          )
           t.out <- if (agg.time == 'season') {
             sort(unique(data.season))
           } else {
-            terra::time(agg_master_ls[[s]])
+            terra::time(agg_master_ls)
           }
 
           stat_results_list[[s]] <- data.frame(
@@ -203,7 +206,7 @@ make_2d_summary_ts <- function(
             agg.time = agg.time,
             ls.id = current_ls_id,
             var.name = var.name,
-            statistics = statistics[s],
+            statistics.spatial = statistics.spatial[s],
             area = area.names[j],
             value = stat_res[, 1]
           )
@@ -213,26 +216,31 @@ make_2d_summary_ts <- function(
       data.stat.df <- dplyr::bind_rows(all_area_results)
     } else {
       agg.stat.ls <- list()
-      for (s in seq_along(statistics)) {
+
+      for (s in seq_along(statistics.spatial)) {
         if (agg.time == 'season') {
           data.agg <- terra::tapp(
             data,
-            fun = statistics[s],
+            fun = statistic.temporal,
             index = data.season
           )
           t.out <- sort(unique(data.season))
         } else {
-          data.agg <- terra::tapp(data, fun = statistics[s], index = agg.time)
+          data.agg <- terra::tapp(
+            data,
+            fun = statistic.temporal,
+            index = agg.time
+          )
           t.out <- terra::time(data.agg)
         }
 
-        res <- terra::global(data.agg, statistics[s], na.rm = TRUE)
+        res <- terra::global(data.agg, statistics.spatial[s], na.rm = TRUE)
         agg.stat.ls[[s]] <- data.frame(
           time = t.out,
           agg.time = agg.time,
           ls.id = current_ls_id,
           var.name = var.name,
-          statistics = statistics[s],
+          statistics = statistics.spatial[s],
           area = NA,
           value = res[, 1]
         )
