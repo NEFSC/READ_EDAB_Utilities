@@ -38,21 +38,34 @@ import_data <- function(data.in, var.name = NULL) {
   if (!is.null(var.name)) {
     data.ls <- lapply(data.ls, function(x) {
       data.varname <- terra::varnames(x)
-      if (length(data.varname) > 1) {
-        data <- terra::subset(x, terra::varnames(x) == var.name)
-      } else {
-        data.names <- terra::names(x)
-        data.names <- data.names[grepl(var.name, data.names)]
 
-        if (length(data.names) == 0) {
-          warning(
-            'NetCDF file does not contain any fields with var.name=',
-            var.name
-          )
-        } else {
-          data <- terra::subset(x, data.names)
-        }
+      # Case 1: The raster has exactly 1 variable, and it matches var.name.
+      # This protects single-variable rasters where layer names are just dates.
+      if (length(data.varname) == 1 && data.varname == var.name) {
+        return(x)
       }
+
+      # Case 2: Multi-variable raster (or varnames isn't explicitly matching)
+      # Rely on layer names, matching exactly OR as a prefix with an underscore
+      data.names <- terra::names(x)
+      idx <- data.names == var.name |
+        grepl(paste0("^", var.name, "_"), data.names)
+
+      # Fallback to general grepl if prefix matching fails
+      if (!any(idx)) {
+        idx <- grepl(var.name, data.names)
+      }
+
+      if (any(idx)) {
+        data <- terra::subset(x, which(idx))
+      } else {
+        warning(
+          'NetCDF file does not contain any fields matching var.name=',
+          var.name
+        )
+        data <- x
+      }
+
       return(data)
     })
   }
